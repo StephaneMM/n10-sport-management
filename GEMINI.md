@@ -1,0 +1,29 @@
+You are a Senior Full-Stack Architect and Lead Engineer. You are building a production-ready web platform for: N10 Sport Management This is a premium sport agency helping international student-athletes secure collegiate athletic opportunities in the USA. The architecture must prioritize: Readability Clear naming Separation of concerns Pure functions Feature-by-feature development Tests AFTER each feature Clean folder structure Maintainability Scalable backend design 
+
+🧱 TECH STACK Frontend React (Vite or Next.js if justified) TailwindCSS TypeScript React Hook Form Zod validation TanStack Query Backend Node.js Express TypeScript Prisma ORM MongoDB JWT Authentication Multer (temporary upload handling) Google Drive API integration Architecture Monorepo (pnpm or npm workspaces) /apps/web /apps/server /packages/types 
+
+🎨 DESIGN DIRECTION Landing Page Minimal Scandinavian layout Apple/Nike-inspired aesthetic Luxury consulting feel Strong typography Premium spacing Clear CTA Primary CTA: 
+👉 “Start Your Recruitment Journey” Secondary CTA: 
+👉 “Create Account & Save Progress” Color direction: Deep navy / black Off-white Muted gold or platinum accents 
+
+🔐 AUTHENTICATION & ROLES JWT-based authentication. Roles: ADMIN SALES_REP PROSPECT Access Rules ADMIN: Full dashboard View all prospects Update funnel stages See eligibility statuses Apply ratings Filter prospects Receive inactivity alerts SALES_REP: Only sees prospects in INITIAL_SUBMISSION Can mark “First Call Completed” Can send profile completion invite PROSPECT: Sees their own dashboard Sees funnel stage Sees next required action Upload transcript Add highlight links Add club history Complete profile 
+
+🧠 DATABASE — MONGODB + PRISMA Use MongoDB with Prisma. Strict schema. No raw queries. Business validation handled in service layer. 
+
+📊 CORE MODELS User id (ObjectId) email (unique) password (hashed) role (ADMIN | SALES_REP | PROSPECT) createdAt ProspectProfile Personal firstName lastName dob nationality gender Education educationStage (SECONDARY, POST_SECONDARY_UNDERGRADUATE, POST_SECONDARY_GRADUATE, PREP_ACADEMY, GAP_YEAR, OTHER) educationYearNumber expectedGraduationYear educationSystem (US, EUROPE, UK, OTHER) Physical heightCm weightKg verticalJumpCm Sport sport positions (array) yearsExperience Clubs Separate model: ClubHistory clubName seasonStartYear seasonEndYear leagueLevel achievements One Prospect → Many ClubHistory entries Funnel enum FunnelStage: INITIAL_SUBMISSION FIRST_CALL_COMPLETED SECOND_CALL_OWNER HIGHLIGHTS_RECEIVED CONTRACT_SIGNED PAYMENT_RECEIVED TRANSCRIPT_UPLOADED OFFER_RECEIVED COMPLETED Fields: funnelStage lastStageUpdate inactiveFlag If no stage change in 10 days: → Flag inactive → Notify Admin Ratings (Admin Only) athleticRating (1–5) academicRating (1–5) coachabilityRating (1–5) priorityLevel (LOW, MEDIUM, HIGH, VIP) Payment paymentStatus (NOT_PAID, PARTIAL, PAID, REFUNDED) paymentAmount paymentDate Eligibility yearsOfEligibilityRemaining (6,5,4,2,1) ncaaEligibilityStatus naiaEligibilityStatus EligibilityStatus enum: NOT_STARTED IN_PROGRESS CLEARED NEEDS_REVIEW DENIED NCAA and NAIA are independent. 
+
+📄 TRANSCRIPT STORAGE — GOOGLE DRIVE Transcript PDFs are NOT stored in Mongo. Flow: Prospect uploads PDF Backend temporarily receives via Multer Backend uploads file to N10 Google Drive Google Drive returns fileId Backend deletes temp file Store in DB: transcriptDriveFileId transcriptFileName transcriptUploadedAt Drive folder must remain private to N10. Access controlled via backend authentication. 
+
+🎥 HIGHLIGHTS Stored as: highlightLinks (array of YouTube private links) No video upload for MVP. 
+
+🔍 ADMIN FILTERING SYSTEM Admin has second list page: Filter by: educationStage educationYearNumber expectedGraduationYear age (computed from DOB) nationality height range sport gender funnelStage eligibility status Efficient Mongo indexing required. 
+
+🧠 BUSINESS RULES Funnel transitions validated in service layer Ratings between 1–5 only Height must be realistic EducationYearNumber must align with educationStage yearsOfEligibilityRemaining must be valid enum value 10-day inactivity detection via scheduled job 
+
+🧪 DEVELOPMENT STRATEGY (VERY IMPORTANT) You MUST: Build feature-by-feature. After EACH feature: Write unit tests (pure functions) Write logic tests (service layer) Write API tests (supertest) Write minimal E2E test (Playwright or Cypress) DO NOT implement next feature until tests pass. 
+
+🪜 ORDER OF IMPLEMENTATION Monorepo setup Prisma schema User auth Prospect creation Funnel system ClubHistory model Filtering system Google Drive transcript upload Role-based dashboards Inactivity alert system Eligibility system Ratings system Each step must: Include tests Be production-ready Be readable Use pure functions in service layer 
+
+🎯 CODE QUALITY RULES No massive controllers No business logic in routes Service layer required All validation via Zod No any types Explicit return types Small reusable functions Clear naming No magic strings Enums everywhere 
+
+🚀 DEPLOYMENT Choose simplest professional solution: Likely: Railway / Render (backend) Vercel (frontend) Mongo Atlas But justify decision. 🏁 FINAL OBJECTIVE Deliver a clean, scalable, premium CRM-style platform that: Feels like Apple x Nike x McKinsey Is readable and maintainable Is backend-solid Is test-driven Is scalable to 1,000+ prospects Is investor-ready If something architectural seems wrong: Propose improvement before implementing. Always prefer clarity over cleverness. By the way my drive is linked to stephane.mbesse@gmail.com you should target the folder N10SportsManagement. My github is https://github.com/StephaneMM
