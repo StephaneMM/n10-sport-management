@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Look ma, no URL! The config file handles it now.
+}
+
+// ------------------------------------------------------
+// ENUMS (Strict Business Rules)
+// ------------------------------------------------------
+enum Role {
+  ADMIN
+  SALES_REP
+  PROSPECT
+}
+
+enum EducationStage {
+  SECONDARY
+  POST_SECONDARY_UNDERGRADUATE
+  POST_SECONDARY_GRADUATE
+  PREP_ACADEMY
+  GAP_YEAR
+  OTHER
+}
+
+enum EducationSystem {
+  US
+  EUROPE
+  UK
+  OTHER
+}
+
+enum FunnelStage {
+  INITIAL_SUBMISSION
+  FIRST_CALL_COMPLETED
+  SECOND_CALL_OWNER
+  HIGHLIGHTS_RECEIVED
+  CONTRACT_SIGNED
+  PAYMENT_RECEIVED
+  TRANSCRIPT_UPLOADED
+  OFFER_RECEIVED
+  COMPLETED
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VIP
+}
+
+enum PaymentStatus {
+  NOT_PAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum EligibilityStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  CLEARED
+  NEEDS_REVIEW
+  DENIED
+}
+
+// ------------------------------------------------------
+// CORE MODELS
+// ------------------------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed via bcrypt later
+  role      Role     @default(PROSPECT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  prospectProfile ProspectProfile?
+}
+
+model ProspectProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal
+  firstName        String
+  lastName         String
+  dob              DateTime
+  nationality      String
+  gender           String
+
+  // Education
+  educationStage         EducationStage
+  educationYearNumber    Int
+  expectedGraduationYear Int
+  educationSystem        EducationSystem
+  
+  // Physical & Sport
+  heightCm         Float
+  weightKg         Float
+  verticalJumpCm   Float?
+  sport            String
+  positions        String[] // PostgreSQL array!
+
+  // Funnel
+  funnelStage      FunnelStage @default(INITIAL_SUBMISSION)
+  lastStageUpdate  DateTime    @default(now())
+  inactiveFlag     Boolean     @default(false)
+
+  // Drive Storage (Populated later)
+  transcriptDriveFileId String?
+  transcriptFileName    String?
+  transcriptUploadedAt  DateTime?
+
+  // Highlights
+  highlightLinks   String[] // Private YouTube links
+
+  // Relations
+  clubHistories    ClubHistory[]
+  ratings          Rating?
+  payment          Payment?
+  eligibility      Eligibility?
+}
+
+model ClubHistory {
+  id               String   @id @default(uuid())
+  prospectId       String
+  prospect         ProspectProfile @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  clubName         String
+  seasonStartYear  Int
+  seasonEndYear    Int
+  leagueLevel      String
+  achievements     String?
+}
+
+model Rating {
+  id                  String   @id @default(uuid())
+  prospectId          String   @unique
+  prospect            ProspectProfile @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  athleticRating      Int      // Validated 1-5 in Service Layer
+  academicRating      Int      // Validated 1-5 in Service Layer
+  coachabilityRating  Int      // Validated 1-5 in Service Layer
+  priorityLevel       PriorityLevel @default(MEDIUM)
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  prospectId       String   @unique
+  prospect         ProspectProfile @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  paymentStatus    PaymentStatus @default(NOT_PAID)
+  paymentAmount    Float?
+  paymentDate      DateTime?
+}
+
+model Eligibility {
+  id                            String   @id @default(uuid())
+  prospectId                    String   @unique
+  prospect                      ProspectProfile @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  yearsOfEligibilityRemaining   Int      // Validated enum (6,5,4,2,1) in Service Layer
+  ncaaEligibilityStatus         EligibilityStatus @default(NOT_STARTED)
+  naiaEligibilityStatus         EligibilityStatus @default(NOT_STARTED)
+}
