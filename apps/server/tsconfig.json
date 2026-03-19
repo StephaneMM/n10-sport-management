@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext", 
+    // fixes TS5109 error telling TS we're running on a modern version of Node and both the code generation and the way it looks for files need to follow the same modern rules.
+    "outDir": "./dist", // Tells the compiler where to put the compiled JavaScript when we eventually deploy to production.
+    "rootDir": "./src", // Tells the compiler where our Vertical Slices live.
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+// TypeScript compiler (tsc) has a custom parser, it will happily read // inside a tsconfig.json file
