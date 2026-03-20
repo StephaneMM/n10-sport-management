@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { authRouter } from './features/auth/auth.routes';
 
 export const app = express();
 
@@ -13,3 +14,5 @@ app.use(express.json());
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'N10 Server is running' });
 });
+
+app.use('/api/auth', authRouter);
