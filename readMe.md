@@ -5,4 +5,4 @@ Premium sport agency platform helping international student-athletes secure coll
 ## Architecture
 - **Monorepo:** pnpm workspaces
 - **Frontend:** Vite + React + TypeScript + Tailwind
-- **Backend:** Node + Express + Prisma
+- **Backend:** Node + Express + Prisma + TypeScript + postgreSQL
