@@ -33,6 +33,3 @@ export const requireUser = (req: Request, res: Response, next: NextFunction): vo
   }
 };
 
-
-git commit -m "feat(server): add get profile endpoint with user relational data"
-git push origin feat/backend-prospect-profile

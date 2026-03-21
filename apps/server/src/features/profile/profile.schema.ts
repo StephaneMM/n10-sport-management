@@ -26,5 +26,13 @@ export const createProfileSchema = z.object({
   }),
 });
 
+// 1. Zod takes your entire creation schema and magically makes every field optional!
+export const updateProfileSchema = z.object({
+  body: createProfileSchema.shape.body.partial(),
+});
+
+// 2. Export the TypeScript type for our handler
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>['body'];
+
 // Export the TypeScript type so our handler knows exactly what data to expect
 export type CreateProfileInput = z.infer<typeof createProfileSchema>['body'];
