@@ -3,6 +3,7 @@ import { createProfileHandler } from './createProfile';
 import { requireUser } from '../../middlewares/requireUser';
 import { validateResource } from '../../middlewares/validateRessource';
 import { createProfileSchema } from './profile.schema';
+import { getProfileHandler } from './getProfile';
 
 const profileRouter = Router();
 
@@ -16,6 +17,9 @@ profileRouter.post(
   createProfileHandler
 );
 
+profileRouter.get('/me', requireUser, getProfileHandler);
+
 console.log("🏀 Profile Router has been successfully loaded!");
 
 export { profileRouter };
+
