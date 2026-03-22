@@ -1,11 +1,24 @@
 import { z } from 'zod';
 
+const TRUSTED_BASE_DOMAINS = [
+  'youtube.com', 
+  'youtu.be', 
+  'youtube-nocookie.com',
+  'hudl.com', 
+  'vimeo.com',
+  'instagram.com', 
+  'twitter.com', 
+  'x.com', // Don't forget Twitter's new domain!
+  'facebook.com', 
+  'tiktok.com'
+];
+
 export const createProfileSchema = z.object({
   body: z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     
-    // z.coerce.date() is a magic trick! It takes a string from the JSON request 
+    // z.coerce.date() takes a string from the JSON request 
     // and automatically turns it into a real JavaScript Date object for Prisma.
     dob: z.coerce.date(), 
     
@@ -22,7 +35,26 @@ export const createProfileSchema = z.object({
     positions: z.array(z.string()).min(1, "At least one position is required"),
     
     // We can even tell Zod to ensure every item in the array is a valid URL!
-    highlightLinks: z.array(z.string().url("Must be a valid URL")).optional().default([]),
+highlightLinks: z.array(
+      z.string()
+        .url("Must be a valid URL")
+        .refine((val) => {
+          try {
+            // 2. This rips the URL apart. 
+            // 'https://www.youtube.com/watch' becomes hostname: 'www.youtube.com'
+            const parsedUrl = new URL(val);
+            
+            // 3. Check if the exact hostname IS the domain, or ENDS WITH ".domain"
+            return TRUSTED_BASE_DOMAINS.some(domain => 
+              parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
+            );
+          } catch {
+            return false; // If Node can't parse it, block it!
+          }
+        }, {
+          message: "Only approved video, sports and social media platforms are allowed."
+        })
+    ).optional().default([]),
   }),
 });
 
