@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { authRouter } from './features/auth/auth.routes';
 import { profileRouter } from './features/profile/profile.routes';
+import { uploadRouter } from './features/uploads/upload.routes';
 
 export const app = express();
 
@@ -19,3 +20,5 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRouter);
 
 app.use('/api/profiles', profileRouter);
+
+app.use('/api/uploads', uploadRouter);
