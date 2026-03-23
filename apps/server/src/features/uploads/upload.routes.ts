@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { upload } from '../../middlewares/upload.middleware'; // Don't forget the .js!
 import { requireUser } from '../../middlewares/requireUser';
+import { uploadFileToCloud } from '../../lib/storage.service';
 
 const uploadRouter = Router();
 
@@ -10,7 +11,7 @@ uploadRouter.post(
   '/', 
   requireUser, 
   upload.single('document'), 
-  (req: Request, res: Response): void => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       // If Multer succeeds, it attaches the file info to req.file!
       if (!req.file) {
@@ -18,14 +19,12 @@ uploadRouter.post(
         return;
       }
 
+      // Hand the file to the Strategy Pattern Switchboard
+      const publicUrl = await uploadFileToCloud(req.file);
+
       res.status(200).json({
         message: 'File uploaded successfully!',
-        file: {
-          filename: req.file.filename,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          path: req.file.path // e.g., "uploads/document-123.pdf"
-        }
+        url: publicUrl, // This will be a GDrive, R2 link, or Local link! no more guessing with res .file, .googleDriveId and .r2Url
       });
     } catch (error) {
       console.error('Upload error:', error);
