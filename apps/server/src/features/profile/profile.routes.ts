@@ -5,6 +5,8 @@ import { validateResource } from '../../middlewares/validateRessource';
 import { createProfileSchema, updateProfileSchema } from './profile.schema';
 import { getProfileHandler } from './getProfile';
 import { updateProfileHandler } from './updateProfile';
+import { addDocumentHandler } from './addDocument';
+import { addDocumentSchema } from './profile.schema';
 
 const profileRouter = Router();
 
@@ -20,12 +22,20 @@ profileRouter.post(
 
 profileRouter.get('/me', requireUser, getProfileHandler);
 
-// Route 3: UPDATE (The new PATCH route!)
+// UPDATE PROFILE
 profileRouter.patch(
   '/me', 
   requireUser, 
   validateResource(updateProfileSchema), 
   updateProfileHandler
+);
+
+// ADD DOCUMENT TO VAULT
+profileRouter.post(
+  '/me/documents',
+  requireUser,
+  validateResource(addDocumentSchema),
+  addDocumentHandler
 );
 
 console.log("🏀 Profile Router has been successfully loaded!");

@@ -8,7 +8,7 @@ const TRUSTED_BASE_DOMAINS = [
   'vimeo.com',
   'instagram.com', 
   'twitter.com', 
-  'x.com', // Don't forget Twitter's new domain!
+  'x.com',
   'facebook.com', 
   'tiktok.com'
 ];
@@ -58,13 +58,32 @@ highlightLinks: z.array(
   }),
 });
 
-// 1. Zod takes your entire creation schema and magically makes every field optional!
+
+export const addDocumentSchema = z.object({
+  body: z.object({
+    url: z.string().url("Must be a valid URL"),
+    type: z.enum([
+      'GOVERNMENT_ID', 
+      'HS_TRANSCRIPT', 
+      'HS_DIPLOMA', 
+      'BACHELOR_TRANSCRIPT', 
+      'BACHELOR_DIPLOMA', 
+      'MASTER_TRANSCRIPT', 
+      'MASTER_DIPLOMA', 
+      'DOCTORATE_TRANSCRIPT', 
+      'DOCTORATE_DIPLOMA', 
+      'OTHER'
+    ]),
+  }),
+});
+
+
+// .partial() Zod making every field optional
 export const updateProfileSchema = z.object({
   body: createProfileSchema.shape.body.partial(),
 });
 
-// 2. Export the TypeScript type for our handler
-export type UpdateProfileInput = z.infer<typeof updateProfileSchema>['body'];
-
 // Export the TypeScript type so our handler knows exactly what data to expect
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>['body'];
 export type CreateProfileInput = z.infer<typeof createProfileSchema>['body'];
+export type AddDocumentInput = z.infer<typeof addDocumentSchema>['body'];

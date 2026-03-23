@@ -22,6 +22,19 @@ enum Role {
   PROSPECT
 }
 
+enum DocumentType {
+  GOVERNMENT_ID
+  HS_TRANSCRIPT
+  HS_DIPLOMA
+  BACHELOR_TRANSCRIPT
+  BACHELOR_DIPLOMA
+  MASTER_TRANSCRIPT
+  MASTER_DIPLOMA
+  DOCTORATE_TRANSCRIPT
+  DOCTORATE_DIPLOMA
+  OTHER
+}
+
 
 // ------------------------------------------------------
 // CORE MODELS
@@ -61,6 +74,21 @@ model ProspectProfile {
   positions        String[] 
   highlightLinks   String[] 
 
+// Documents uploaded
+  documents        Document[]
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Document {
+  id                String          @id @default(uuid())
+  url               String
+  type              DocumentType
+  
+  // The relational link back to the Prospect Profile
+  prospectProfileId String
+  prospectProfile   ProspectProfile @relation(fields: [prospectProfileId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime        @default(now())
 }
