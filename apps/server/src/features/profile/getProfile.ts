@@ -16,7 +16,8 @@ export const getProfileHandler = async (
       include: {
         user: {
           select: { email: true, role: true }
-        }
+        },
+        documents: true,
       }
     });
 
