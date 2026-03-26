@@ -20,6 +20,7 @@ enum Role {
   ADMIN
   SALES_REP
   PROSPECT
+  COACH
 }
 
 enum DocumentType {
@@ -52,6 +53,41 @@ model User {
   prospectProfile ProspectProfile? 
 }
 
+model Lead {
+  id               String   @id @default(uuid())
+  
+  // Contact Info
+  firstName        String
+  lastName         String
+  email            String
+  phone            String
+  country          String
+  
+  // Demographics & Sport
+  nationality      String
+  gender           String
+  sport            String
+  positions        String[]
+  
+  // Physical
+  heightCm         Float
+  weightKg         Float
+  verticalJumpCm   Float?
+  
+  // Experience
+  league           String?
+  currentClub      String?
+  highlightLinks   String[]
+  
+  // Messages & Admin Notes
+  messageToUs      String?  // Not mandatory
+  adminComment     String?  // Admin adds this later
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+
 model ProspectProfile {
   id               String   @id @default(uuid())
   
@@ -63,6 +99,8 @@ model ProspectProfile {
   firstName        String
   lastName         String
   dob              DateTime
+  phoneNumber      String
+  country          String
   nationality      String
   gender           String
 
@@ -73,6 +111,8 @@ model ProspectProfile {
   sport            String
   positions        String[] 
   highlightLinks   String[] 
+  league           String?
+  currentClub      String? 
 
 // Documents uploaded
   documents        Document[]
