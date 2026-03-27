@@ -1,0 +1,14 @@
+{
+  "name": "n10-sports-management-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web --filter server --parallel run dev",
+    "web": "pnpm --filter web run dev",
+    "server": "pnpm --filter server run dev"
+  },
+  "pnpm": {
+    "overrides": {
+      "zod": "^3.25.76"
+    }
+  }
+}

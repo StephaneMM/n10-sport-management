@@ -1,0 +1,249 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
+import { useSubmitLead } from "@/shared/api/leads";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+const SPORTS = ["Soccer", "Basketball", "Tennis", "Track & Field", "Swimming", "Volleyball", "Baseball", "Golf", "Football", "Track & Field", "Cheerleading", "Other"];
+const GENDERS = ["Male", "Female", "Other"];
+
+// Workaround for @types/react version mismatch before switch to react 19
+const CheckCircleIcon = CheckCircle as any;
+const LinkIcon = Link as any;
+
+
+const ApplyPage = () => {
+  const { t } = useTranslation();
+  const [submitted, setSubmitted] = useState(false);
+  const mutation = useSubmitLead();
+
+  const form = useForm<LeadFormValues>({
+    resolver: zodResolver(leadFormSchema),
+    defaultValues: {
+      firstName: "", lastName: "", email: "", phone: "",
+      country: "", nationality: "", gender: "", sport: "",
+      positions: "", heightCm: undefined as unknown as number, weightKg: undefined as unknown as number,
+      verticalJumpCm: "", league: "", currentClub: "",
+      highlightLinks: "", messageToUs: "",
+    },
+  });
+
+  const onSubmit = (data: LeadFormValues) => {
+    mutation.mutate(data, {
+      onSuccess: () => {
+        form.reset();
+        setSubmitted(true);
+      },
+    });
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-primary flex items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-lg"
+        >
+          <CheckCircleIcon className="mx-auto h-16 w-16 text-gold mb-6" />
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+            {t("apply.thank_you_title")}
+          </h1>
+          <p className="font-body text-primary-foreground/70 text-lg mb-8">
+            {t("apply.thank_you_message")}
+          </p>
+          <Button asChild className="bg-gold text-primary hover:bg-gold-light font-body">
+            <LinkIcon to="/">{t("apply.back_home")}</LinkIcon>
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-primary">
+      {/* Header */}
+      <div className="border-b border-primary-foreground/10">
+        <div className="container px-6 py-6 flex items-center justify-between">
+          <LinkIcon to="/" className="font-display text-2xl font-bold text-primary-foreground">
+            N10<span className="text-gold">.</span>
+          </LinkIcon>
+          <LanguageSwitcher variant="dark" />
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="container px-6 py-12 md:py-20 max-w-3xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-3">
+            {t("apply.page_title")}
+          </h1>
+          <p className="font-body text-primary-foreground/60 mb-10">
+            {t("apply.page_subtitle")}
+          </p>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* Personal Info */}
+              <Section title={t("apply.personal_info")}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field form={form} name="firstName" label={t("apply.first_name")} />
+                  <Field form={form} name="lastName" label={t("apply.last_name")} />
+                  <Field form={form} name="email" label={t("apply.email")} type="email" />
+                  <Field form={form} name="phone" label={t("apply.phone")} type="tel" />
+                  <Field form={form} name="country" label={t("apply.country")} />
+                  <Field form={form} name="nationality" label={t("apply.nationality")} />
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary-foreground/80 font-body text-sm">{t("apply.gender")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-navy-light border-primary-foreground/10 text-primary-foreground">
+                              <SelectValue placeholder={t("apply.select_gender")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </Section>
+
+              {/* Sport Info */}
+              <Section title={t("apply.athletic_profile")}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="sport"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary-foreground/80 font-body text-sm">{t("apply.sport")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-navy-light border-primary-foreground/10 text-primary-foreground">
+                              <SelectValue placeholder={t("apply.select_sport")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {SPORTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Field form={form} name="positions" label={t("apply.positions")} placeholder={t("apply.positions_placeholder")} />
+                  <Field form={form} name="heightCm" label={t("apply.height")} type="number" />
+                  <Field form={form} name="weightKg" label={t("apply.weight")} type="number" />
+                  <Field form={form} name="verticalJumpCm" label={t("apply.vertical_jump")} type="number" placeholder={t("apply.optional")} />
+                  <Field form={form} name="league" label={t("apply.league")} placeholder={t("apply.optional")} />
+                  <Field form={form} name="currentClub" label={t("apply.current_club")} placeholder={t("apply.optional")} className="md:col-span-2" />
+                </div>
+              </Section>
+
+              {/* Highlights */}
+              <Section title={t("apply.highlights_message")}>
+                <Field form={form} name="highlightLinks" label={t("apply.highlight_links")} placeholder={t("apply.highlight_placeholder")} />
+                <FormField
+                  control={form.control}
+                  name="messageToUs"
+                  render={({ field }) => (
+                    <FormItem className="mt-4">
+                      <FormLabel className="text-primary-foreground/80 font-body text-sm">{t("apply.message_to_us")}</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder={t("apply.message_placeholder")}
+                          className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30 min-h-[120px]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Section>
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={mutation.isPending}
+                className="w-full bg-gold text-primary hover:bg-gold-light font-body text-base py-6 tracking-wide"
+              >
+                {mutation.isPending ? t("apply.submitting") : t("apply.submit")}
+              </Button>
+            </form>
+          </Form>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Helpers ──────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="font-display text-xl font-semibold text-gold mb-4">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({
+  form, name, label, type = "text", placeholder, className,
+}: {
+  form: ReturnType<typeof useForm<LeadFormValues>>;
+  name: keyof LeadFormValues;
+  label: string;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className={className}>
+          <FormLabel className="text-primary-foreground/80 font-body text-sm">{label}</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              type={type}
+              placeholder={placeholder}
+              value={field.value ?? ""}
+              className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30"
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+export default ApplyPage;
