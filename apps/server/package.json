@@ -4,6 +4,7 @@
   "description": "N10 Sports Management Server Application",
   "main": "index.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "seed": "ts-node --transpile-only prisma/seed.ts",
     "test": "jest",
