@@ -3,13 +3,14 @@ import { registerHandler } from './register';
 import { loginHandler } from './login';
 import { validateResource } from '../../middlewares/validateRessource';
 import { requireUser } from '../../middlewares/requireUser';
+import { authLimiter } from '../../middlewares/rateLimit';
 import { registerSchema, loginSchema } from './auth.schema';
 
 const authRouter = Router();
 
-authRouter.post('/register',validateResource(registerSchema), registerHandler);
+authRouter.post('/register', authLimiter, validateResource(registerSchema), registerHandler);
 
-authRouter.post('/login', validateResource(loginSchema), loginHandler);
+authRouter.post('/login', authLimiter, validateResource(loginSchema), loginHandler);
 
 authRouter.get('/me', requireUser, (req: Request, res: Response) => {
   // If the code reaches here, the Bouncer already verified them!

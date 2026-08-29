@@ -15,11 +15,13 @@ describe('parseEnv', () => {
     expect(env.JWT_SECRET).toBe(STRONG_SECRET);
     expect(env.NODE_ENV).toBe('development');
     expect(env.PORT).toBe(4000);
+    expect(env.TRUST_PROXY).toBe(0);
   });
 
-  it('coerces PORT to a number', () => {
-    const env = parseEnv({ ...validSource, PORT: '8080' });
+  it('coerces PORT and TRUST_PROXY to numbers', () => {
+    const env = parseEnv({ ...validSource, PORT: '8080', TRUST_PROXY: '1' });
     expect(env.PORT).toBe(8080);
+    expect(env.TRUST_PROXY).toBe(1);
   });
 
   it('throws when DATABASE_URL is missing', () => {

@@ -22,6 +22,10 @@ const FORBIDDEN_JWT_SECRETS = new Set([
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
+  // Number of reverse-proxy hops in front of the app (Render/Railway/Fly/Nginx
+  // are usually 1). Controls Express `trust proxy` so req.ip — and therefore
+  // rate limiting — sees the real client, not the proxy. 0 = trust nobody.
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z
     .string()
