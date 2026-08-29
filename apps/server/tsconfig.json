@@ -7,12 +7,13 @@
     "outDir": "./dist", // Tells the compiler where to put the compiled JavaScript when we eventually deploy to production.
     "rootDir": "./src", // Tells the compiler where our Vertical Slices live.
     "strict": true,
+    "isolatedModules": true, // required by ts-jest transpilation; also a good safety net for future bundlers
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/test"]
 }
 // TypeScript compiler (tsc) has a custom parser, it will happily read // inside a tsconfig.json file
