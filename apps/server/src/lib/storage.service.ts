@@ -1,58 +1,77 @@
-import { google } from 'googleapis'; 
-import fs from 'fs';
+import { Readable } from 'node:stream';
+import { randomUUID } from 'node:crypto';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
+import { env } from '../config/env';
 
+export interface StoredObject {
+  /** Opaque object key — the only handle we persist. */
+  key: string;
+  /** Sanitised original file name, for the download filename. */
+  fileName: string;
+}
 
-const ACTIVE_PROVIDER = process.env.ACTIVE_STORAGE_PROVIDER || 'LOCAL';
+function getClient() {
+  const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET } = env;
 
-// THE GOOGLE DRIVE STRATEGY
-const uploadToGoogleDrive = async (file: Express.Multer.File): Promise<string> => {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY
-        ? process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
-        : undefined,
-    },
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
-  });
-
-  const drive = google.drive({ version: 'v3', auth });
-
-  // Send the file from your local uploads folder to Google Drive!
-  const response = await drive.files.create({
-    requestBody: {
-      name: file.filename,
-      parents: [process.env.GDRIVE_N10_FOLDER_ID!], // Put it in a specific N10 folder
-    },
-    media: {
-      mimeType: file.mimetype,
-      body: fs.createReadStream(file.path), // Read the file Multer just saved
-    },
-  });
-
-  return `https://drive.google.com/uc?id=${response.data.id}`; // File url 
-};
-
-// THE LOCAL STRATEGY (Fallback)
-const uploadToLocal = async (file: Express.Multer.File): Promise<string> => {
-  // If we are just using local storage, the file is already saved by Multer!
-  // We just return the local path.
-  return `http://localhost:4000/${file.path}`;
-};
-
-// 4. THE SWITCHBOARD 
-export const uploadFileToCloud = async (file: Express.Multer.File): Promise<string> => {
-  if (ACTIVE_PROVIDER === 'GDRIVE') {
-    console.log("☁️ Feature Flag: Routing file to Google Drive...");
-    return await uploadToGoogleDrive(file);
-  } 
-  
-  if (ACTIVE_PROVIDER === 'R2') {
-    console.log("☁️ Feature Flag: Routing file to Cloudflare R2...");
-    // TODO
-    // return await uploadToCloudflareR2(file);
+  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET) {
+    throw new Error(
+      'Object storage is not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET.',
+    );
   }
 
-  console.log("📁 Feature Flag: Routing file to Local Storage...");
-  return await uploadToLocal(file);
-};
+  const client = new S3Client({
+    region: 'auto',
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
+  });
+
+  return { client, bucket: R2_BUCKET };
+}
+
+/** Keep only characters that are safe in a file name and an HTTP header. */
+function safeFileName(originalName: string): string {
+  const cleaned = originalName.replace(/[^\w.\- ]+/g, '_').replace(/^\.+/, '').slice(0, 200);
+  return cleaned || 'file';
+}
+
+/** Uploads an in-memory file to R2 under an opaque, unguessable key. */
+export async function putObject(file: Express.Multer.File): Promise<StoredObject> {
+  const { client, bucket } = getClient();
+  const fileName = safeFileName(file.originalname);
+  const key = `documents/${randomUUID()}/${fileName}`;
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ContentLength: file.size,
+    }),
+  );
+
+  return { key, fileName };
+}
+
+/** Opens a readable stream of an object's bytes, for the download proxy. */
+export async function getObjectStream(key: string): Promise<Readable> {
+  const { client, bucket } = getClient();
+  const response = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+
+  if (!response.Body) {
+    throw new Error(`Object ${key} has no body.`);
+  }
+
+  return response.Body as Readable;
+}
+
+/** Permanently removes an object. */
+export async function deleteObject(key: string): Promise<void> {
+  const { client, bucket } = getClient();
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+}

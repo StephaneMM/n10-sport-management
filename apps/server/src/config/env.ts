@@ -34,6 +34,14 @@ const envSchema = z.object({
       (value) => !FORBIDDEN_JWT_SECRETS.has(value),
       'JWT_SECRET is a known placeholder value — generate a real secret (e.g. `openssl rand -base64 48`)',
     ),
+
+  // Cloudflare R2 (S3-compatible) — where uploaded documents are stored.
+  // Optional at boot so dev/CI run without credentials; storage.service throws
+  // a clear error if an upload/download is attempted while any are missing.
+  R2_ACCOUNT_ID: z.string().min(1).optional(),
+  R2_ACCESS_KEY_ID: z.string().min(1).optional(),
+  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  R2_BUCKET: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
