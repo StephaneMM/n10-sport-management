@@ -3,21 +3,26 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { env } from '../config/env';
 
-// 1. Connection string — validated centrally in config/env
+// Connection string — validated centrally in config/env. In production point
+// this at the Neon *pooled* endpoint.
 const connectionString = env.DATABASE_URL;
 
-// 2. Create a standard PostgreSQL connection pool
-const pool = new Pool({ connectionString });
+// One small pool per process. On serverless the function instance is reused
+// across warm invocations, so keep it to a single connection and let the Neon
+// pooler fan out.
+const pool = new Pool({
+  connectionString,
+  max: env.NODE_ENV === 'production' ? 1 : 10,
+});
 
-// 3. Wrap the pool in Prisma's official adapter
 const adapter = new PrismaPg(pool);
 
-// 4. Pass the adapter into the Prisma Client
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+// Cache the client on `global` so warm serverless invocations (and dev HMR)
+// reuse it instead of opening a new connection every request.
+const globalForPrisma = global as unknown as { prisma?: PrismaClient };
 
-export const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
-
-if (env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
+globalForPrisma.prisma = prisma;
 
 // Instead of Prisma doing everything under the hood (which was slower and harder to deploy to modern edge servers), 
 // we are now manually creating a blazing-fast native PostgreSQL Pool and injecting it directly into Prisma using the { adapter } option.
