@@ -7,7 +7,17 @@ build/
 
 # Environment variables (Crucial for later!)
 .env
-.env.local
+.env.*
+!.env.example
+
+# Non-pnpm lockfiles (this repo uses pnpm)
+package-lock.json
+yarn.lock
+
+# AI assistant context files (personal, not app code)
+GEMINI.md
+CLAUDE.md
+GEMINI.local.md
 
 # OS generated files
 .DS_Store

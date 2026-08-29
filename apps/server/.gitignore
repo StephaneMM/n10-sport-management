@@ -1,5 +1,19 @@
+# Dependencies
 node_modules
-# Keep environment variables out of version control
-.env
 
+# Build output
+dist
 /generated/prisma
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Runtime upload scratch space (files live in object storage, not git)
+uploads/*
+!uploads/.gitkeep
+
+# Logs & coverage
+*.log
+coverage
