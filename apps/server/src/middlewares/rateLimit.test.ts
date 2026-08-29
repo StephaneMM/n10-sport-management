@@ -72,3 +72,19 @@ describe('authLimiter on POST /api/auth/login', () => {
     expect(blocked.body).toHaveProperty('error');
   });
 });
+
+describe('publicLeadLimiter on POST /api/leads', () => {
+  it('throttles repeated submissions with 429', async () => {
+    // An empty body 400s at validation, but the limiter (which runs first) still
+    // counts every request.
+    const submit = () => request(app).post('/api/leads').send({});
+
+    for (let i = 0; i < 15; i += 1) {
+      expect((await submit()).status).toBe(400);
+    }
+
+    const blocked = await submit();
+    expect(blocked.status).toBe(429);
+    expect(blocked.body).toHaveProperty('error');
+  });
+});
