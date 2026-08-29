@@ -38,8 +38,6 @@ profileRouter.post(
   addDocumentHandler
 );
 
-console.log("🏀 Profile Router has been successfully loaded!");
-
 export { profileRouter };
 
 
