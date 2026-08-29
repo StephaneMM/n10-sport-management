@@ -5,6 +5,7 @@ import { env } from './config/env';
 import { authRouter } from './features/auth/auth.routes';
 import { profileRouter } from './features/profile/profile.routes';
 import { leadRouter } from './features/leads/lead.routes';
+import { errorHandler } from './middlewares/errorHandler';
 
 export const app = express();
 
@@ -30,3 +31,6 @@ app.use('/api/auth', authRouter);
 app.use('/api/profiles', profileRouter);
 
 app.use('/api/leads', leadRouter);
+
+// Terminal error handler — keep last.
+app.use(errorHandler);
