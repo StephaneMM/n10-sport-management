@@ -129,7 +129,19 @@
     "error_lead": "Impossible de charger ce prospect. Veuillez réessayer.",
     "retry": "Réessayer",
     "update_failed": "Échec de la mise à jour",
-    "update_error": "Impossible d'enregistrer vos modifications. Veuillez réessayer."
+    "update_error": "Impossible d'enregistrer vos modifications. Veuillez réessayer.",
+    "search_placeholder": "Rechercher un nom ou un e-mail",
+    "filter_sport": "Sport",
+    "filter_all_sports": "Tous les sports",
+    "filter_gender": "Genre",
+    "filter_all_genders": "Tous les genres",
+    "filter_nationality": "Nationalité",
+    "date_from": "Du",
+    "date_to": "Au",
+    "clear_filters": "Effacer les filtres",
+    "page_of": "Page {{page}} sur {{total}}",
+    "prev": "Précédent",
+    "next": "Suivant"
   },
   "not_found": {
     "title": "404",

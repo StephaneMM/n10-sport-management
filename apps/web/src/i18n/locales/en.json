@@ -129,7 +129,19 @@
     "error_lead": "We couldn't load this lead. Please try again.",
     "retry": "Retry",
     "update_failed": "Update failed",
-    "update_error": "We couldn't save your changes. Please try again."
+    "update_error": "We couldn't save your changes. Please try again.",
+    "search_placeholder": "Search name or email",
+    "filter_sport": "Sport",
+    "filter_all_sports": "All sports",
+    "filter_gender": "Gender",
+    "filter_all_genders": "All genders",
+    "filter_nationality": "Nationality",
+    "date_from": "From",
+    "date_to": "To",
+    "clear_filters": "Clear filters",
+    "page_of": "Page {{page}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next"
   },
   "not_found": {
     "title": "404",

@@ -129,7 +129,19 @@
     "error_lead": "تعذّر تحميل هذا العميل المحتمل. يرجى المحاولة مرة أخرى.",
     "retry": "إعادة المحاولة",
     "update_failed": "فشل التحديث",
-    "update_error": "تعذّر حفظ التغييرات. يرجى المحاولة مرة أخرى."
+    "update_error": "تعذّر حفظ التغييرات. يرجى المحاولة مرة أخرى.",
+    "search_placeholder": "ابحث بالاسم أو البريد الإلكتروني",
+    "filter_sport": "الرياضة",
+    "filter_all_sports": "كل الرياضات",
+    "filter_gender": "الجنس",
+    "filter_all_genders": "كل الأجناس",
+    "filter_nationality": "الجنسية",
+    "date_from": "من",
+    "date_to": "إلى",
+    "clear_filters": "مسح عوامل التصفية",
+    "page_of": "صفحة {{page}} من {{total}}",
+    "prev": "السابق",
+    "next": "التالي"
   },
   "not_found": {
     "title": "404",

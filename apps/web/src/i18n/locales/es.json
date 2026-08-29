@@ -129,7 +129,19 @@
     "error_lead": "No pudimos cargar este prospecto. Inténtalo de nuevo.",
     "retry": "Reintentar",
     "update_failed": "Error al actualizar",
-    "update_error": "No pudimos guardar los cambios. Inténtalo de nuevo."
+    "update_error": "No pudimos guardar los cambios. Inténtalo de nuevo.",
+    "search_placeholder": "Buscar nombre o correo",
+    "filter_sport": "Deporte",
+    "filter_all_sports": "Todos los deportes",
+    "filter_gender": "Género",
+    "filter_all_genders": "Todos los géneros",
+    "filter_nationality": "Nacionalidad",
+    "date_from": "Desde",
+    "date_to": "Hasta",
+    "clear_filters": "Borrar filtros",
+    "page_of": "Página {{page}} de {{total}}",
+    "prev": "Anterior",
+    "next": "Siguiente"
   },
   "not_found": {
     "title": "404",

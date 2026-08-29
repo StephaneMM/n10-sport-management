@@ -14,10 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 import { useSubmitLead } from "@/shared/api/leads";
+import { SPORTS, GENDERS } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-const SPORTS = ["Soccer", "Basketball", "Tennis", "Track & Field", "Swimming", "Volleyball", "Baseball", "Golf", "Football", "Track & Field", "Cheerleading", "Other"];
-const GENDERS = ["Male", "Female", "Other"];
 
 const ApplyPage = () => {
   const { t } = useTranslation();
