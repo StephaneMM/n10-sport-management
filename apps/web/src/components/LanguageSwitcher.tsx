@@ -15,9 +15,6 @@ const languages = [
   { code: "ar", label: "العربية", flag: "🇲🇦"},
 ];
 
-// Workaround for @types/react version mismatch before switch to react 19
-const GlobeIcon = Globe as any;
-
 interface LanguageSwitcherProps {
   variant?: "light" | "dark";
 }
@@ -43,7 +40,7 @@ const LanguageSwitcher = ({ variant = "dark" }: LanguageSwitcherProps) => {
       <SelectTrigger
         className={`w-[140px] h-9 font-body text-sm gap-2 ${triggerClass}`}
       >
-        <GlobeIcon className="h-4 w-4 shrink-0 opacity-60" />
+        <Globe className="h-4 w-4 shrink-0 opacity-60" />
         <SelectValue>
           {current.flag} {current.label}
         </SelectValue>
