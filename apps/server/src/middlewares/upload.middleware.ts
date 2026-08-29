@@ -1,42 +1,34 @@
 import multer from 'multer';
-import path from 'path'; // Built-in Node module for handling file paths
 
-// Where and How to save
-const storage = multer.diskStorage({
-  // Tell Multer which folder to drop the files into
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); 
-  },
-  // Give every single file a mathematically unique name
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // Extract the original extension (e.g., ".pdf" or ".png")
-    const extension = path.extname(file.originalname);
-    // Result: "document-1710000000000-123456789.pdf"
-    cb(null, file.fieldname + '-' + uniqueSuffix + extension);
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+
+/** Thrown by the file filter; the global error handler turns it into a 400. */
+export class UnsupportedFileTypeError extends Error {
+  constructor() {
+    super('Only JPG, PNG, WEBP and PDF files are allowed.');
+    this.name = 'UnsupportedFileTypeError';
   }
-});
+}
 
-// File filter
 const fileFilter = (
   _req: Express.Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  // Only Images (Profile Pics) and PDFs (Transcripts)
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']; // no video allowed
-  
-  if (allowedTypes.includes(file.mimetype)) {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Please use YouTube links for videos. Only JPG, PNG, and PDF are allowed for direct upload.'));
+    cb(new UnsupportedFileTypeError());
   }
 };
-// Export the middleware
-export const upload = multer({ 
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // Hard limit: 5 MB
-  }
+
+/**
+ * In-memory upload handling: the file lives in `req.file.buffer` and is streamed
+ * straight to object storage. Nothing touches the local disk, which is ephemeral
+ * or read-only on the hosts we deploy to.
+ */
+export const upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
