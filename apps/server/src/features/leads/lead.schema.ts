@@ -25,4 +25,25 @@ export const createLeadSchema = z.object({
   }),
 });
 
+export const getLeadSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid Lead ID format"),
+  }),
+});
+// Validate the update payload
+export const updateLeadSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid Lead ID format"),
+  }),
+  body: z.object({
+    adminComment: z.string().min(1, "Comment cannot be empty"),
+  }),
+});
+
+
+export type UpdateLeadParams = z.infer<typeof updateLeadSchema>['params'];
+export type UpdateLeadBody = z.infer<typeof updateLeadSchema>['body'];
+
+
+export type GetLeadInput = z.infer<typeof getLeadSchema>['params'];
 export type CreateLeadInput = z.infer<typeof createLeadSchema>['body'];
