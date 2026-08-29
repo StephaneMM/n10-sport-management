@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
@@ -9,27 +9,60 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useLead } from "@/shared/api/leads";
 import { toast } from "@/hooks/use-toast";
-import { apiClient } from "@/shared/api/client";
+import { apiClient, ApiError } from "@/shared/api/client";
 
 const AdminLeadDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const { data: lead, isLoading } = useLead(id!);
-  const [comments, setComments] = useState(lead.adminComment ||"");
+  const { data: lead, isLoading, isError, error, refetch } = useLead(id!);
+  const [comments, setComments] = useState("");
+
+  // Seed the comment box once the lead arrives (data is undefined while loading).
+  useEffect(() => {
+    if (lead) setComments(lead.adminComment ?? "");
+  }, [lead]);
 
   const handleSaveComments = async () => {
     try {
       await apiClient(`/leads/${id}`, { method: "PATCH", body: { adminComment: comments } });
       toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") });
-    } catch (error) {
+    } catch {
       toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" });
     }
   };
+
+  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    return <Navigate to="/admin/login" replace />;
+  }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-primary flex items-center justify-center">
         <p className="font-body text-primary-foreground/50">{t("admin.loading")}</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="font-body text-primary-foreground/90">{t("admin.error_title")}</p>
+        <p className="font-body text-sm text-primary-foreground/60">
+          {error instanceof Error ? error.message : t("admin.error_lead")}
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="font-body border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+          >
+            {t("admin.retry")}
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="text-primary-foreground/50">
+            <Link to="/admin/dashboard"><ArrowLeft className="h-4 w-4 me-1" /> {t("admin.back")}</Link>
+          </Button>
+        </div>
       </div>
     );
   }

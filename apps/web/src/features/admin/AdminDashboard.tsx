@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { LogOut, Users } from "lucide-react";
@@ -8,12 +8,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { useLeads } from "@/shared/api/leads";
 import { logout } from "@/shared/api/auth";
+import { ApiError } from "@/shared/api/client";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: leads, isLoading } = useLeads();
+  const { data: leads, isLoading, isError, error, refetch } = useLeads();
+
+  // An expired or rejected session: bounce to the login screen.
+  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    return <Navigate to="/admin/login" replace />;
+  }
 
   const handleLogout = () => {
     logout();
@@ -63,7 +69,22 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          {isLoading ? (
+          {isError ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-6">
+              <p className="font-body text-primary-foreground/90 mb-1">{t("admin.error_title")}</p>
+              <p className="font-body text-sm text-primary-foreground/60 mb-4">
+                {error instanceof Error ? error.message : t("admin.error_leads")}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                className="font-body border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                {t("admin.retry")}
+              </Button>
+            </div>
+          ) : isLoading ? (
             <p className="font-body text-primary-foreground/50">{t("admin.loading")}</p>
           ) : !leads?.length ? (
             <p className="font-body text-primary-foreground/50">{t("admin.no_leads")}</p>

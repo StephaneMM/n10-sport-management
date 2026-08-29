@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ApiError } from "@/shared/api/client";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ApplyPage from "./features/apply/ApplyPage";
@@ -11,7 +12,20 @@ import AdminDashboard from "./features/admin/AdminDashboard";
 import AdminLeadDetail from "./features/admin/AdminLeadDetail";
 import ProtectedRoute from "./features/admin/ProtectedRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Don't retry client errors (bad request, unauthorized, not found) —
+      // retrying won't help and just delays showing the real error.
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

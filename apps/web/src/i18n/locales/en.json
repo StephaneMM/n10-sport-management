@@ -123,7 +123,13 @@
     "weight": "Weight",
     "vertical_jump": "Vertical Jump",
     "league": "League",
-    "current_club": "Current Club"
+    "current_club": "Current Club",
+    "error_title": "Something went wrong",
+    "error_leads": "We couldn't load the leads. Please try again.",
+    "error_lead": "We couldn't load this lead. Please try again.",
+    "retry": "Retry",
+    "update_failed": "Update failed",
+    "update_error": "We couldn't save your changes. Please try again."
   },
   "not_found": {
     "title": "404",

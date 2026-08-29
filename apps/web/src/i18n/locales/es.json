@@ -123,7 +123,13 @@
     "weight": "Peso",
     "vertical_jump": "Salto Vertical",
     "league": "Liga",
-    "current_club": "Club Actual"
+    "current_club": "Club Actual",
+    "error_title": "Algo salió mal",
+    "error_leads": "No pudimos cargar los prospectos. Inténtalo de nuevo.",
+    "error_lead": "No pudimos cargar este prospecto. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "update_failed": "Error al actualizar",
+    "update_error": "No pudimos guardar los cambios. Inténtalo de nuevo."
   },
   "not_found": {
     "title": "404",
