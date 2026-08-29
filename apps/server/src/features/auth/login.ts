@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { ValidatedRequest } from '../../types/express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma';
@@ -6,7 +7,7 @@ import { env } from '../../config/env';
 import { LoginInput } from './auth.schema';
 
 export const loginHandler = async (
-  req: Request<{}, {}, LoginInput>,
+  req: ValidatedRequest<LoginInput>,
   res: Response
 ): Promise<void> => {
   try {

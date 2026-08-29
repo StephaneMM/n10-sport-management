@@ -10,8 +10,8 @@ export const validateResource = (schema: z.ZodSchema) =>
           body: req.body,
           query: req.query,
           params: req.params,
-        }) as any // because it's unknown at this point, TypeScript refuses read .body or .query from it. but we will overwrite the original req.body and req.query with the parsedData, so we can safely ignore the type issues here.
-        
+        }) as { body: unknown };
+
         // 2. Overwrite the raw request with the clean Zod data
         // that way the coerced types (like dates) are available in the route handler without any extra work!
         req.body = parsedData.body;
@@ -21,16 +21,16 @@ export const validateResource = (schema: z.ZodSchema) =>
         // We only use req.body for validation, so we can skip overwriting req.query and req.params for now. 
         
       next();
-    } catch (e: any) {
+    } catch (e) {
       // Safely check if it's a ZodError using the 'z' object
       if (e instanceof z.ZodError) {
         // e.issues is the standard way to extract validation failures in modern Zod
         res.status(400).json({ errors: e.issues });
         return;
       }
-      
+
       // Fallback for non-Zod errors
-      res.status(400).json({ error: e.message });
+      res.status(400).json({ error: e instanceof Error ? e.message : 'Invalid request payload' });
       return;
     }
   };

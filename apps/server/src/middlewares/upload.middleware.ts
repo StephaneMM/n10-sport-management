@@ -19,8 +19,8 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (
-  req: any, 
-  file: Express.Multer.File, 
+  _req: Express.Request,
+  file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
   // Only Images (Profile Pics) and PDFs (Transcripts)

@@ -1,9 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
 import { AddDocumentInput } from './profile.schema';
 
 export const addDocumentHandler = async (
-  req: Request<{}, {}, AddDocumentInput>,
+  req: ValidatedRequest<AddDocumentInput>,
   res: Response
 ): Promise<void> => {
   try {

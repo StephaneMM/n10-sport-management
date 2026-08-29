@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { Prisma } from '@prisma/client';
+import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
 import { UpdateLeadParams, UpdateLeadBody } from './lead.schema';
 
 export const updateLeadHandler = async (
-  req: Request<UpdateLeadParams, {}, UpdateLeadBody>,
+  req: ValidatedRequest<UpdateLeadBody, UpdateLeadParams>,
   res: Response
 ): Promise<void> => {
   try {
@@ -25,9 +27,9 @@ export const updateLeadHandler = async (
 
     // 3. Send the updated lead back to the frontend
     res.status(200).json(updatedLead);
-  } catch (error: any) {
-    // If Prisma can't find the ID to update, it throws a specific code (P2025)
-    if (error.code === 'P2025') {
+  } catch (error) {
+    // If Prisma can't find the ID to update, it throws code P2025
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       res.status(404).json({ error: 'Lead not found.' });
       return;
     }

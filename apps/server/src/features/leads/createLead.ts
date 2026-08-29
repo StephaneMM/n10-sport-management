@@ -1,9 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
 import { CreateLeadInput } from './lead.schema';
 
 export const createLeadHandler = async (
-  req: Request<{}, {}, CreateLeadInput>,
+  req: ValidatedRequest<CreateLeadInput>,
   res: Response
 ): Promise<void> => {
   try {

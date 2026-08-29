@@ -1,9 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
 import { UpdateProfileInput } from './profile.schema';
 
 export const updateProfileHandler = async (
-  req: Request<{}, {}, UpdateProfileInput>,
+  req: ValidatedRequest<UpdateProfileInput>,
   res: Response
 ): Promise<void> => {
   try {

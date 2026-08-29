@@ -1,11 +1,12 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { ValidatedRequest } from '../../types/express';
 import bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { RegisterInput } from './auth.schema';
 
 export const registerHandler = async (
-  req: Request<{}, {}, RegisterInput>,
+  req: ValidatedRequest<RegisterInput>,
   res: Response
 ): Promise<void> => {
   try {
