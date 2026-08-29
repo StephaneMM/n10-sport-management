@@ -30,6 +30,26 @@ export const getLeadSchema = z.object({
     id: z.string().uuid("Invalid Lead ID format"),
   }),
 });
+
+// Columns an admin may sort the lead list by.
+export const LEAD_SORT_FIELDS = ['createdAt', 'lastName', 'firstName', 'sport', 'country'] as const;
+
+// Parsed directly from req.query in the handler (Express 5 makes req.query
+// read-only, so validateResource can't hand it back).
+export const listLeadsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().trim().min(1).optional(),
+  sport: z.string().trim().min(1).optional(),
+  nationality: z.string().trim().min(1).optional(),
+  gender: z.string().trim().min(1).optional(),
+  dateFrom: z.coerce.date().optional(),
+  dateTo: z.coerce.date().optional(),
+  sortBy: z.enum(LEAD_SORT_FIELDS).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
 // Validate the update payload
 export const updateLeadSchema = z.object({
   params: z.object({
