@@ -14,7 +14,9 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const AdminDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: leads, isLoading, isError, error, refetch } = useLeads();
+  const { data, isLoading, isError, error, refetch } = useLeads();
+  const leads = data?.leads;
+  const total = data?.pagination.total;
 
   // An expired or rejected session: bounce to the login screen.
   if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
@@ -62,9 +64,9 @@ const AdminDashboard = () => {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground">
               {t("admin.leads")}
             </h1>
-            {leads && (
+            {total !== undefined && (
               <span className="font-body text-sm text-primary-foreground/40 ms-2">
-                ({leads.length})
+                ({total})
               </span>
             )}
           </div>

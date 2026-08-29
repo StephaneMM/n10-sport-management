@@ -48,3 +48,32 @@ export interface Lead {
   createdAt: string;
   updatedAt: string;
 }
+
+// ─── Admin list: filters & paginated response ────────────
+
+export type LeadSortField = "createdAt" | "lastName" | "firstName" | "sport" | "country";
+
+export interface LeadListFilters {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  sport?: string;
+  nationality?: string;
+  gender?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: LeadSortField;
+  sortOrder?: "asc" | "desc";
+}
+
+export interface Pagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface LeadListResponse {
+  leads: Lead[];
+  pagination: Pagination;
+}

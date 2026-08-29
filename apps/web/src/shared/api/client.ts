@@ -6,6 +6,8 @@ interface RequestOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
+  /** Appended as a query string; `undefined`, `null` and `""` values are dropped. */
+  params?: Record<string, unknown>;
 }
 
 /** Error thrown for any non-2xx response, carrying the HTTP status. */
@@ -23,11 +25,26 @@ function getAuthToken(): string | null {
   return localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
+function buildUrl(endpoint: string, params?: Record<string, unknown>): string {
+  const url = `${API_BASE_URL}${endpoint}`;
+  if (!params) return url;
+
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== "") {
+      search.append(key, String(value));
+    }
+  }
+
+  const queryString = search.toString();
+  return queryString ? `${url}?${queryString}` : url;
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, headers = {} } = options;
+  const { method = "GET", body, headers = {}, params } = options;
   const token = getAuthToken();
 
   const config: RequestInit = {
@@ -43,7 +60,7 @@ export async function apiClient<T>(
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  const response = await fetch(buildUrl(endpoint, params), config);
 
   if (!response.ok) {
     // The API returns `{ error: string }`; tolerate `{ message }` and empty bodies.

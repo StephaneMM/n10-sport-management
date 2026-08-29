@@ -78,4 +78,14 @@ describe("apiClient", () => {
       "Bearer abc123",
     );
   });
+
+  it("appends params as a query string and drops empty values", async () => {
+    const fetchMock = mockFetch({ ok: true, json: async () => ({}) });
+
+    await apiClient("/leads", {
+      params: { page: 2, search: "ada", sport: undefined, gender: "" },
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/leads?page=2&search=ada");
+  });
 });

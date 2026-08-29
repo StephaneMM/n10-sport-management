@@ -1,6 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { apiClient } from "./client";
-import { Lead, LeadFormValues } from "@/shared/types/lead";
+import { Lead, LeadFormValues, LeadListFilters, LeadListResponse } from "@/shared/types/lead";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Submit Lead (Public) ────────────────────────────────
@@ -47,13 +47,12 @@ export function useSubmitLead() {
 
 // ─── Fetch Leads (Admin) ─────────────────────────────────
 
-export function useLeads() {
-  return useQuery<Lead[]>({
-    queryKey: ["leads"],
-    queryFn: async () => {
-      const response = await apiClient<{ leads: Lead[] }>("/leads");
-      return response.leads;
-    },
+export function useLeads(filters: LeadListFilters = {}) {
+  return useQuery<LeadListResponse>({
+    queryKey: ["leads", filters],
+    queryFn: () => apiClient<LeadListResponse>("/leads", { params: { ...filters } }),
+    // Keep the current page visible while the next one loads.
+    placeholderData: keepPreviousData,
   });
 }
 

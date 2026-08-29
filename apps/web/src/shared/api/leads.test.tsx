@@ -26,14 +26,31 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+const paginated = (leads: unknown[], total = leads.length) => ({
+  leads,
+  pagination: { page: 1, pageSize: 20, total, totalPages: 1 },
+});
+
 describe("useLeads", () => {
-  it("returns the leads array unwrapped from the API envelope", async () => {
-    mockApiClient.mockResolvedValue({ leads: [{ id: "1" }, { id: "2" }] });
+  it("returns the paginated envelope from the API", async () => {
+    mockApiClient.mockResolvedValue(paginated([{ id: "1" }, { id: "2" }], 42));
 
     const { result } = renderHook(() => useLeads(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toHaveLength(2);
+    expect(result.current.data?.leads).toHaveLength(2);
+    expect(result.current.data?.pagination.total).toBe(42);
+  });
+
+  it("passes filters through to the API as query params", async () => {
+    mockApiClient.mockResolvedValue(paginated([]));
+
+    renderHook(() => useLeads({ page: 2, search: "ada", sport: "Soccer" }), { wrapper });
+
+    await waitFor(() => expect(mockApiClient).toHaveBeenCalled());
+    expect(mockApiClient).toHaveBeenCalledWith("/leads", {
+      params: { page: 2, search: "ada", sport: "Soccer" },
+    });
   });
 
   it("surfaces the error instead of falling back to mock data", async () => {
