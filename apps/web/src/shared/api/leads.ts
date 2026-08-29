@@ -11,19 +11,37 @@ export function useSubmitLead() {
     mutationFn: (data: LeadFormValues) => {
       const payload = {
         ...data,
-        positions: data.positions.split(",").map((p) => p.trim()),
+        // Force these to be actual numbers for the Zod Bouncer
+        heightCm: Number(data.heightCm),
+        weightKg: Number(data.weightKg),
+
+        positions:
+          typeof data.positions === "string"
+            ? data.positions.split(",").map((p) => p.trim())
+            : data.positions,
         highlightLinks: data.highlightLinks
-          ? data.highlightLinks.split(",").map((l) => l.trim()).filter(Boolean)
+          ? data.highlightLinks
+              .split(",")
+              .map((l) => l.trim())
+              .filter(Boolean)
           : [],
-        verticalJumpCm: data.verticalJumpCm === "" ? undefined : data.verticalJumpCm,
+        verticalJumpCm:
+          data.verticalJumpCm === 0 ? undefined : data.verticalJumpCm,
       };
       return apiClient<Lead>("/leads", { method: "POST", body: payload });
     },
     onSuccess: () => {
-      toast({ title: "Application submitted successfully!", description: "We'll be in touch soon." });
+      toast({
+        title: "Application submitted successfully!",
+        description: "We'll be in touch soon.",
+      });
     },
     onError: (error: Error) => {
-      toast({ title: "Submission failed", description: error.message, variant: "destructive" });
+      toast({
+        title: "Submission failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 }
@@ -35,7 +53,11 @@ export function useLeads() {
     queryKey: ["leads"],
     queryFn: async () => {
       try {
-        return await apiClient<Lead[]>("/leads");
+        // 1. Tell TypeScript we expect an object with a 'leads' array inside
+        const response = await apiClient<{ leads: Lead[] }>("/leads");
+
+        // 2. Extract and return ONLY the array!
+        return response.leads;
       } catch {
         // Fallback to mock data for preview
         return MOCK_LEADS;

@@ -9,15 +9,21 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useLead } from "@/shared/api/leads";
 import { toast } from "@/hooks/use-toast";
+import { apiClient } from "@/shared/api/client";
 
 const AdminLeadDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: lead, isLoading } = useLead(id!);
-  const [comments, setComments] = useState("");
+  const [comments, setComments] = useState(lead.adminComment ||"");
 
-  const handleSaveComments = () => {
-    toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") });
+  const handleSaveComments = async () => {
+    try {
+      await apiClient(`/leads/${id}`, { method: "PATCH", body: { adminComment: comments } });
+      toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") });
+    } catch (error) {
+      toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" });
+    }
   };
 
   if (isLoading) {
