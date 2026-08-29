@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { RegisterInput } from './auth.schema';
 
@@ -8,7 +9,7 @@ export const registerHandler = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -23,7 +24,10 @@ export const registerHandler = async (
       data: {
         email,
         password: hashedPassword,
-        role,
+        // Public sign-up ALWAYS creates a PROSPECT. Elevated roles are never
+        // taken from client input — they are granted by the seed script or a
+        // future admin-only endpoint.
+        role: Role.PROSPECT,
       },
       select: {
         id: true,
