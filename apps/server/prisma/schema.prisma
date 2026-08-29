@@ -85,6 +85,13 @@ model Lead {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  // Support the admin list filters and sorts (see listLeadsQuerySchema).
+  @@index([createdAt])
+  @@index([sport])
+  @@index([nationality])
+  @@index([gender])
+  @@index([country])
 }
 
 
