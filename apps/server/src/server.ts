@@ -10,7 +10,14 @@ export const app = express();
 
 // Security and utility middlewares
 app.use(helmet());
-app.use(cors());
+
+// Vite usually runs on 5173, Lovable sometimes defaults to 8080. 
+  // We allow both for local development, plus the future production URL.
+app.use(cors({ 
+  origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'], 
+  credentials: true, // If decide to use cookies later!
+}));
+
 app.use(express.json());
 
 // Health check route
