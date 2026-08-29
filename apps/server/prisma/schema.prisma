@@ -130,9 +130,13 @@ model ProspectProfile {
 
 model Document {
   id                String          @id @default(uuid())
-  url               String
+
+  // Object storage (R2) holds the bytes; we keep the key + display metadata.
+  fileKey           String
+  fileName          String
+  mimeType          String
   type              DocumentType
-  
+
   // The relational link back to the Prospect Profile
   prospectProfileId String
   prospectProfile   ProspectProfile @relation(fields: [prospectProfileId], references: [id], onDelete: Cascade)
