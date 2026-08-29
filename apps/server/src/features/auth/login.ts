@@ -2,10 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma';
+import { env } from '../../config/env';
 import { LoginInput } from './auth.schema';
-
-// In production, this MUST come from your .env file!
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-local-dev-key';
 
 export const loginHandler = async (
   req: Request<{}, {}, LoginInput>,
@@ -34,7 +32,7 @@ export const loginHandler = async (
     // 3. Mint the VIP Pass (JWT)
     const token = jwt.sign(
       { userId: user.id, role: user.role }, // The data hidden inside the token
-      JWT_SECRET,                           // The signature proving WE made it
+      env.JWT_SECRET,                        // The signature proving WE made it
       { expiresIn: '7d' }                   // The pass expires in 7 days
     );
 

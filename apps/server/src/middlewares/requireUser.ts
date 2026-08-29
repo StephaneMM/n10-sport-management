@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-// Again, in production, this MUST come from your .env file!
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-local-dev-key';
+import { env } from '../config/env';
 
 export const requireUser = (req: Request, res: Response, next: NextFunction): void => {
   // 1. Look for the Bouncer's VIP pass in the headers
@@ -18,7 +16,7 @@ export const requireUser = (req: Request, res: Response, next: NextFunction): vo
 
   try {
     // 3. The Math Check: Did WE sign this token, and is it still unexpired?
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, env.JWT_SECRET);
 
     // 4. Success! Attach the user's decoded payload to Express's local variables
     // so the next function in line knows exactly who is making the request.

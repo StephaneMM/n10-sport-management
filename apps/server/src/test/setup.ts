@@ -6,6 +6,8 @@
 // unless a query runs, so a placeholder URL is safe for tests that mock Prisma
 // or never touch the database.
 process.env.NODE_ENV = 'test';
-process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret';
+// Must satisfy config/env: >= 32 chars and not a known placeholder.
+process.env.JWT_SECRET =
+  process.env.JWT_SECRET ?? 'test-jwt-secret-0000000000000000000000000000';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgresql://test:test@localhost:5432/n10_test';
