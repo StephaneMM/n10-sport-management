@@ -9,3 +9,21 @@ describe('GET /health', () => {
     expect(response.body).toEqual({ status: 'ok', message: 'N10 Server is running' });
   });
 });
+
+describe('CORS', () => {
+  it('reflects an allowed origin (the test default includes localhost:8080)', async () => {
+    const response = await request(app)
+      .get('/health')
+      .set('Origin', 'http://localhost:8080');
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:8080');
+  });
+
+  it('does not allow an unlisted origin', async () => {
+    const response = await request(app)
+      .get('/health')
+      .set('Origin', 'https://evil.example.com');
+
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});

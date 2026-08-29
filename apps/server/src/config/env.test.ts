@@ -18,6 +18,16 @@ describe('parseEnv', () => {
     expect(env.TRUST_PROXY).toBe(0);
   });
 
+  it('parses CORS_ORIGINS into a trimmed list, falling back to dev ports', () => {
+    expect(parseEnv(validSource).CORS_ORIGINS).toContain('http://localhost:8080');
+    expect(parseEnv({ ...validSource, CORS_ORIGINS: '  ' }).CORS_ORIGINS).toContain(
+      'http://localhost:8080',
+    );
+    expect(
+      parseEnv({ ...validSource, CORS_ORIGINS: 'https://a.com, https://b.com' }).CORS_ORIGINS,
+    ).toEqual(['https://a.com', 'https://b.com']);
+  });
+
   it('coerces PORT and TRUST_PROXY to numbers', () => {
     const env = parseEnv({ ...validSource, PORT: '8080', TRUST_PROXY: '1' });
     expect(env.PORT).toBe(8080);

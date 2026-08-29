@@ -16,12 +16,8 @@ app.set('trust proxy', env.TRUST_PROXY);
 // Security and utility middlewares
 app.use(helmet());
 
-// Vite usually runs on 5173, Lovable sometimes defaults to 8080. 
-  // We allow both for local development, plus the future production URL.
-app.use(cors({ 
-  origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'], 
-  credentials: true, // If decide to use cookies later!
-}));
+// Allowed browser origins come from CORS_ORIGINS (see config/env).
+app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
 
 app.use(express.json());
 

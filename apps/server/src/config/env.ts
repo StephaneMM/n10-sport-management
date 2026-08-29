@@ -26,6 +26,19 @@ const envSchema = z.object({
   // are usually 1). Controls Express `trust proxy` so req.ip — and therefore
   // rate limiting — sees the real client, not the proxy. 0 = trust nobody.
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+
+  // Comma-separated list of browser origins allowed to call the API. Unset or
+  // empty falls back to the local dev ports; set the deployed frontend URL(s)
+  // in production.
+  CORS_ORIGINS: z
+    .string()
+    .optional()
+    .transform((value) => {
+      const raw =
+        value?.trim() || 'http://localhost:8080,http://localhost:5173,http://localhost:3000';
+      return raw.split(',').map((origin) => origin.trim()).filter(Boolean);
+    }),
+
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z
     .string()
