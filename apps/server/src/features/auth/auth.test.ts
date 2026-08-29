@@ -18,6 +18,24 @@ const mockedPrisma = prisma as unknown as {
 
 const VALID_PASSWORD = 'Passw0rd!';
 
+/**
+ * Logs in and returns a valid JWT. `mockResolvedValueOnce` so only the login
+ * lookup is stubbed — the caller controls what the subsequent per-request
+ * revalidation lookup in requireUser returns.
+ */
+async function loginAndGetToken(role = 'ADMIN'): Promise<string> {
+  mockedPrisma.user.findUnique.mockResolvedValueOnce({
+    id: 'user-1',
+    email: 'member@n10.test',
+    password: await bcrypt.hash(VALID_PASSWORD, 10),
+    role,
+  });
+  const response = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'member@n10.test', password: VALID_PASSWORD });
+  return response.body.token as string;
+}
+
 describe('POST /api/auth/register', () => {
   beforeEach(() => {
     mockedPrisma.user.findUnique.mockResolvedValue(null);
@@ -173,22 +191,58 @@ describe('GET /api/auth/me', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns the decoded identity for a valid token', async () => {
-    mockedPrisma.user.findUnique.mockResolvedValue({
-      id: 'user-1',
-      email: 'member@n10.test',
-      password: await bcrypt.hash(VALID_PASSWORD, 10),
-      role: 'ADMIN',
-    });
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'member@n10.test', password: VALID_PASSWORD });
+  it('returns the identity for a valid token', async () => {
+    const token = await loginAndGetToken('ADMIN');
 
     const response = await request(app)
       .get('/api/auth/me')
-      .set('Authorization', `Bearer ${login.body.token}`);
+      .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-    expect(response.body.user).toMatchObject({ userId: 'user-1', role: 'ADMIN' });
+    expect(response.body.user).toMatchObject({
+      userId: 'user-1',
+      email: 'member@n10.test',
+      role: 'ADMIN',
+    });
+  });
+});
+
+describe('requireUser account revalidation', () => {
+  it('rejects a still-valid token whose account was deleted', async () => {
+    const token = await loginAndGetToken('ADMIN');
+    mockedPrisma.user.findUnique.mockResolvedValue(null); // deleted since login
+
+    const response = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(401);
+  });
+
+  it('uses the current role from the database, not the role baked into the token', async () => {
+    const token = await loginAndGetToken('SALES_REP'); // token says SALES_REP
+    mockedPrisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      email: 'member@n10.test',
+      role: 'ADMIN', // promoted since the token was issued
+    });
+
+    const response = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.user.role).toBe('ADMIN');
+  });
+
+  it('blocks any protected route when the account no longer exists', async () => {
+    const token = await loginAndGetToken('ADMIN');
+    mockedPrisma.user.findUnique.mockResolvedValue(null);
+
+    const response = await request(app)
+      .get('/api/leads')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(401);
   });
 });
