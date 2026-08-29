@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "pnpm --filter web --filter server --parallel run dev",
     "web": "pnpm --filter web run dev",
-    "server": "pnpm --filter server run dev"
+    "server": "pnpm --filter server run dev",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "pnpm": {
     "overrides": {
@@ -12,5 +14,11 @@
       "@types/react": "^18.3.28",
       "@types/react-dom": "^18.3.7"
     }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/pg": "^8.18.0",
+    "dotenv": "^17.3.1",
+    "pg": "^8.20.0"
   }
 }

@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:4000', // backend
+        // Overridable so the e2e harness can point the web app at its own server.
+        target: process.env.VITE_PROXY_TARGET || 'http://localhost:4000',
         changeOrigin: true,
         secure: false,
       },
