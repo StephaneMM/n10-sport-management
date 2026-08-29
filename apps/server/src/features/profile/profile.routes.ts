@@ -1,46 +1,51 @@
 import { Router } from 'express';
-import { createProfileHandler } from './createProfile';
 import { requireUser } from '../../middlewares/requireUser';
 import { validateResource } from '../../middlewares/validateRessource';
-import { createProfileSchema, updateProfileSchema } from './profile.schema';
+import { upload } from '../../middlewares/upload.middleware';
+import {
+  createProfileSchema,
+  updateProfileSchema,
+  addDocumentSchema,
+  documentIdParamSchema,
+} from './profile.schema';
+import { createProfileHandler } from './createProfile';
 import { getProfileHandler } from './getProfile';
 import { updateProfileHandler } from './updateProfile';
 import { addDocumentHandler } from './addDocument';
-import { addDocumentSchema } from './profile.schema';
+import { downloadDocumentHandler } from './downloadDocument';
+import { deleteDocumentHandler } from './deleteDocument';
 
 const profileRouter = Router();
 
-// requireUser: Do you have a valid JWT?
-// validateResource: Is your sports data perfectly formatted?
-// createProfileHandler: Save it to PostgreSQL!
-profileRouter.post(
-  '/', 
-  requireUser, 
-  validateResource(createProfileSchema), 
-  createProfileHandler
-);
+profileRouter.post('/', requireUser, validateResource(createProfileSchema), createProfileHandler);
 
 profileRouter.get('/me', requireUser, getProfileHandler);
 
-// UPDATE PROFILE
-profileRouter.patch(
-  '/me', 
-  requireUser, 
-  validateResource(updateProfileSchema), 
-  updateProfileHandler
-);
+profileRouter.patch('/me', requireUser, validateResource(updateProfileSchema), updateProfileHandler);
 
-// ADD DOCUMENT TO VAULT
+// Upload a document (multipart: `document` file + `type` field)
 profileRouter.post(
   '/me/documents',
   requireUser,
+  upload.single('document'),
   validateResource(addDocumentSchema),
-  addDocumentHandler
+  addDocumentHandler,
 );
 
-console.log("🏀 Profile Router has been successfully loaded!");
+// Download a document — streamed from storage, own documents only
+profileRouter.get(
+  '/me/documents/:id/download',
+  requireUser,
+  validateResource(documentIdParamSchema),
+  downloadDocumentHandler,
+);
+
+// Remove a document from the vault
+profileRouter.delete(
+  '/me/documents/:id',
+  requireUser,
+  validateResource(documentIdParamSchema),
+  deleteDocumentHandler,
+);
 
 export { profileRouter };
-
-
-

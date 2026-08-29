@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DocumentType } from '@prisma/client';
 
 const TRUSTED_BASE_DOMAINS = [
   'youtube.com', 
@@ -63,23 +64,20 @@ highlightLinks: z.array(
 });
 
 
+// The file arrives as multipart form-data; `type` is the accompanying text field.
 export const addDocumentSchema = z.object({
   body: z.object({
-    url: z.string().url("Must be a valid URL"),
-    type: z.enum([
-      'GOVERNMENT_ID', 
-      'HS_TRANSCRIPT', 
-      'HS_DIPLOMA', 
-      'BACHELOR_TRANSCRIPT', 
-      'BACHELOR_DIPLOMA', 
-      'MASTER_TRANSCRIPT', 
-      'MASTER_DIPLOMA', 
-      'DOCTORATE_TRANSCRIPT', 
-      'DOCTORATE_DIPLOMA', 
-      'OTHER'
-    ]),
+    type: z.nativeEnum(DocumentType),
   }),
 });
+
+export const documentIdParamSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid document id'),
+  }),
+});
+
+export type DocumentIdParam = z.infer<typeof documentIdParamSchema>['params'];
 
 
 // .partial() Zod making every field optional
