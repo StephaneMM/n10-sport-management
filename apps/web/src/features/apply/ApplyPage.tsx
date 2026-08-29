@@ -19,11 +19,6 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const SPORTS = ["Soccer", "Basketball", "Tennis", "Track & Field", "Swimming", "Volleyball", "Baseball", "Golf", "Football", "Track & Field", "Cheerleading", "Other"];
 const GENDERS = ["Male", "Female", "Other"];
 
-// Workaround for @types/react version mismatch before switch to react 19
-const CheckCircleIcon = CheckCircle as any;
-const LinkIcon = Link as any;
-
-
 const ApplyPage = () => {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
@@ -57,7 +52,7 @@ const ApplyPage = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-lg"
         >
-          <CheckCircleIcon className="mx-auto h-16 w-16 text-gold mb-6" />
+          <CheckCircle className="mx-auto h-16 w-16 text-gold mb-6" />
           <h1 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
             {t("apply.thank_you_title")}
           </h1>
@@ -65,7 +60,7 @@ const ApplyPage = () => {
             {t("apply.thank_you_message")}
           </p>
           <Button asChild className="bg-gold text-primary hover:bg-gold-light font-body">
-            <LinkIcon to="/">{t("apply.back_home")}</LinkIcon>
+            <Link to="/">{t("apply.back_home")}</Link>
           </Button>
         </motion.div>
       </div>
@@ -77,9 +72,9 @@ const ApplyPage = () => {
       {/* Header */}
       <div className="border-b border-primary-foreground/10">
         <div className="container px-6 py-6 flex items-center justify-between">
-          <LinkIcon to="/" className="font-display text-2xl font-bold text-primary-foreground">
+          <Link to="/" className="font-display text-2xl font-bold text-primary-foreground">
             N10<span className="text-gold">.</span>
-          </LinkIcon>
+          </Link>
           <LanguageSwitcher variant="dark" />
         </div>
       </div>
