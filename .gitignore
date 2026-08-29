@@ -21,3 +21,6 @@ GEMINI.local.md
 
 # OS generated files
 .DS_Store
+
+# TypeScript incremental build cache
+*.tsbuildinfo
