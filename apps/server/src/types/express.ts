@@ -1,4 +1,5 @@
 import type { Request } from 'express';
+import type { AuthenticatedUser } from '../middlewares/requireUser';
 
 /**
  * An Express Request whose body has already been validated and coerced by the
@@ -12,3 +13,14 @@ export type ValidatedRequest<Body, Params = Record<string, never>> = Request<
   unknown,
   Body
 >;
+
+// `requireUser` attaches the authenticated user here; type it so handlers get
+// `string` (not `any`) for `res.locals.user.userId`.
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Locals {
+      user: AuthenticatedUser;
+    }
+  }
+}

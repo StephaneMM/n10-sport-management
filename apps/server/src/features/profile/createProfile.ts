@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
 import { CreateProfileInput } from './profile.schema';
@@ -24,12 +25,10 @@ export const createProfileHandler = async (
       return;
     }
 
-    // 4. Save the athlete to the database!
+    // 4. Save the athlete. profileData is already validated by createProfileSchema,
+    // so the cast is safe — it just sidesteps a Prisma XOR-type inference quirk.
     const newProfile = await prisma.prospectProfile.create({
-      data: {
-        userId, // We force the profile to link to the logged-in user
-        ...profileData, // Spread the rest of the validated sports data
-      },
+      data: { ...profileData, userId } as Prisma.ProspectProfileUncheckedCreateInput,
     });
 
     // 5. Success!
