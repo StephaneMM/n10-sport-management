@@ -26,7 +26,7 @@ const ApplyPage = () => {
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
       firstName: "", lastName: "", email: "", phone: "",
-      country: "", nationality: "", gender: "", sport: "",
+      country: "", dateOfBirth: "", nationality: "", gender: "", sport: "",
       positions: "", heightCm: undefined as unknown as number, weightKg: undefined as unknown as number,
       verticalJumpCm: "", league: "", currentClub: "",
       highlightLinks: "", messageToUs: "",
@@ -101,6 +101,7 @@ const ApplyPage = () => {
                   <Field form={form} name="email" label={t("apply.email")} type="email" />
                   <Field form={form} name="phone" label={t("apply.phone")} type="tel" />
                   <Field form={form} name="country" label={t("apply.country")} />
+                  <DateOfBirthField form={form} label={t("apply.date_of_birth")} placeholder={t("apply.date_of_birth_placeholder")} />
                   <Field form={form} name="nationality" label={t("apply.nationality")} />
                   <FormField
                     control={form.control}
@@ -203,6 +204,45 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="font-display text-xl font-semibold text-gold mb-4">{title}</h2>
       {children}
     </div>
+  );
+}
+
+/** Digits only, auto-inserting slashes so the value can only ever be DD/MM/YYYY. */
+function formatDateOfBirthInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
+    .filter((part) => part.length > 0)
+    .join("/");
+}
+
+function DateOfBirthField({
+  form, label, placeholder,
+}: {
+  form: ReturnType<typeof useForm<LeadFormValues>>;
+  label: string;
+  placeholder: string;
+}) {
+  return (
+    <FormField
+      control={form.control}
+      name="dateOfBirth"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="text-primary-foreground/80 font-body text-sm">{label}</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              inputMode="numeric"
+              placeholder={placeholder}
+              value={field.value ?? ""}
+              onChange={(e) => field.onChange(formatDateOfBirthInput(e.target.value))}
+              className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30"
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }
 

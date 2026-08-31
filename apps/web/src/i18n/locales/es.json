@@ -62,6 +62,8 @@
     "email": "Correo Electrónico",
     "phone": "Teléfono",
     "country": "País",
+    "date_of_birth": "Fecha de nacimiento (DD/MM/AAAA)",
+    "date_of_birth_placeholder": "DD/MM/AAAA",
     "nationality": "Nacionalidad",
     "gender": "Género",
     "select_gender": "Seleccione género",

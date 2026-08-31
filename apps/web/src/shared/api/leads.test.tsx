@@ -3,8 +3,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { useLeads, useLead } from "./leads";
+import { useLeads, useLead, useSubmitLead } from "./leads";
 import { ApiError } from "./client";
+import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 
 vi.mock("./client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./client")>();
@@ -61,6 +62,57 @@ describe("useLeads", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.data).toBeUndefined();
     expect(result.current.error).toBeInstanceOf(ApiError);
+  });
+});
+
+const validFormValues: LeadFormValues = {
+  firstName: "Ana",
+  lastName: "Silva",
+  email: "ana@example.com",
+  phone: "+55 11 99999-9999",
+  country: "Brazil",
+  dateOfBirth: "14/05/2008",
+  nationality: "Brazilian",
+  gender: "Female",
+  sport: "Volleyball",
+  positions: "Outside Hitter, Opposite",
+  heightCm: 182,
+  weightKg: 70,
+  verticalJumpCm: "",
+  league: "",
+  currentClub: "",
+  highlightLinks: "",
+  messageToUs: "",
+};
+
+describe("leadFormSchema — date of birth", () => {
+  it.each(["", "2008-05-14", "5/14/2008", "32/01/2008", "14/05/2999"])(
+    "rejects %j",
+    (dateOfBirth) => {
+      expect(leadFormSchema.safeParse({ ...validFormValues, dateOfBirth }).success).toBe(false);
+    },
+  );
+
+  it("accepts a real past DD/MM/YYYY date", () => {
+    expect(leadFormSchema.safeParse(validFormValues).success).toBe(true);
+  });
+});
+
+describe("useSubmitLead", () => {
+  it("converts the date of birth to ISO and splits positions before POSTing", async () => {
+    mockApiClient.mockResolvedValue({ id: "lead-1" });
+
+    const { result } = renderHook(() => useSubmitLead(), { wrapper });
+    result.current.mutate(validFormValues);
+
+    await waitFor(() => expect(mockApiClient).toHaveBeenCalled());
+    const [, options] = mockApiClient.mock.calls[0];
+    expect(options?.method).toBe("POST");
+    expect(options?.body).toMatchObject({
+      dateOfBirth: "2008-05-14",
+      positions: ["Outside Hitter", "Opposite"],
+      heightCm: 182,
+    });
   });
 });
 

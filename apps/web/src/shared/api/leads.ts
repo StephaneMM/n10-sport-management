@@ -1,6 +1,12 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { apiClient } from "./client";
-import { Lead, LeadFormValues, LeadListFilters, LeadListResponse } from "@/shared/types/lead";
+import {
+  Lead,
+  LeadFormValues,
+  LeadListFilters,
+  LeadListResponse,
+  dateOfBirthToIso,
+} from "@/shared/types/lead";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Submit Lead (Public) ────────────────────────────────
@@ -10,6 +16,8 @@ export function useSubmitLead() {
     mutationFn: (data: LeadFormValues) => {
       const payload = {
         ...data,
+        // The form collects DD/MM/YYYY; the API expects an ISO date.
+        dateOfBirth: dateOfBirthToIso(data.dateOfBirth),
         // Force these to be actual numbers for the Zod Bouncer
         heightCm: Number(data.heightCm),
         weightKg: Number(data.weightKg),

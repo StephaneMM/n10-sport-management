@@ -1,5 +1,33 @@
 import { z } from "zod";
 
+// ─── Date of birth (DD/MM/YYYY) ──────────────────────────
+
+export const DOB_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+
+/** True when `value` is a real calendar date, in the past, not absurdly old. */
+export function isValidDateOfBirth(value: string): boolean {
+  const match = DOB_PATTERN.exec(value);
+  if (!match) return false;
+  const [, dd, mm, yyyy] = match;
+  const day = Number(dd);
+  const month = Number(mm);
+  const year = Number(yyyy);
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day &&
+    year >= 1940 &&
+    date.getTime() <= Date.now()
+  );
+}
+
+/** "14/05/2008" → "2008-05-14" for the API (which expects an ISO date). */
+export function dateOfBirthToIso(value: string): string {
+  const [dd, mm, yyyy] = value.split("/");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 // ─── Lead Form Schema ────────────────────────────────────
 
 export const leadFormSchema = z.object({
@@ -8,6 +36,11 @@ export const leadFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
   country: z.string().min(1, "Country is required"),
+  dateOfBirth: z
+    .string()
+    .min(1, "Date of birth is required")
+    .regex(DOB_PATTERN, "Use the format DD/MM/YYYY")
+    .refine(isValidDateOfBirth, "Enter a valid past date"),
   nationality: z.string().min(1, "Nationality is required"),
   gender: z.string().min(1, "Gender is required"),
   sport: z.string().min(1, "Sport is required"),
@@ -33,6 +66,7 @@ export interface Lead {
   email: string;
   phone: string;
   country: string;
+  dateOfBirth: string;
   nationality: string;
   gender: string;
   sport: string;

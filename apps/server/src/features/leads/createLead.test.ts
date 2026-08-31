@@ -14,6 +14,7 @@ const validLead = {
   email: 'ana@example.com',
   phone: '+55 11 99999-9999',
   country: 'Brazil',
+  dateOfBirth: '2008-05-14',
   nationality: 'Brazilian',
   gender: 'Female',
   sport: 'Volleyball',
@@ -50,12 +51,20 @@ describe('POST /api/leads', () => {
     expect(data.highlightLinks).toEqual([]);
   });
 
+  it('coerces the ISO dateOfBirth string to a Date', async () => {
+    await request(app).post('/api/leads').send(validLead);
+    const { data } = mockedPrisma.lead.create.mock.calls[0][0];
+    expect(data.dateOfBirth).toEqual(new Date('2008-05-14'));
+  });
+
   it.each([
     ['an invalid email', { ...validLead, email: 'not-an-email' }],
     ['a missing first name', { ...validLead, firstName: '' }],
     ['a non-positive height', { ...validLead, heightCm: -5 }],
     ['no positions', { ...validLead, positions: [] }],
     ['a non-URL highlight link', { ...validLead, highlightLinks: ['not a url'] }],
+    ['a missing dateOfBirth', { ...validLead, dateOfBirth: undefined }],
+    ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
   ])('rejects %s with 400', async (_label, body) => {
     const response = await request(app).post('/api/leads').send(body);
 

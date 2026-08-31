@@ -62,6 +62,8 @@
     "email": "البريد الإلكتروني",
     "phone": "الهاتف",
     "country": "البلد",
+    "date_of_birth": "تاريخ الميلاد (يوم/شهر/سنة)",
+    "date_of_birth_placeholder": "يوم/شهر/سنة",
     "nationality": "الجنسية",
     "gender": "الجنس",
     "select_gender": "اختر الجنس",

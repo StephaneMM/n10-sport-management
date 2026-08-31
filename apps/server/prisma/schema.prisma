@@ -72,6 +72,9 @@ model Lead {
   country          String
   
   // Demographics & Sport
+  // Mandatory — drives recruiting class and the eligibility clock. Enforced by
+  // createLeadSchema on the way in and NOT NULL in the database.
+  dateOfBirth      DateTime
   nationality      String
   gender           String
   sport            String

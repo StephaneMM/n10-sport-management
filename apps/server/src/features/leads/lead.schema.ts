@@ -9,6 +9,10 @@ export const createLeadSchema = z.object({
     phone: z.string().min(1, "Phone number is required"),
     country: z.string().min(1, "Country is required"),
     
+    dateOfBirth: z.coerce
+      .date()
+      .min(new Date('1940-01-01'), "Date of birth is not valid")
+      .max(new Date(), "Date of birth must be in the past"),
     nationality: z.string().min(1, "Nationality is required"),
     gender: z.string().min(1, "Gender is required"),
     sport: z.string().min(1, "Sport is required"),
