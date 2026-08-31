@@ -1,10 +1,12 @@
 {
   "name": "n10-sports-management-monorepo",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev": "pnpm --filter web --filter server --parallel run dev",
     "web": "pnpm --filter web run dev",
     "server": "pnpm --filter server run dev",
+    "verify": "pnpm -r run typecheck && pnpm -r run lint && pnpm -r run test && pnpm -r run build",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
