@@ -6,15 +6,24 @@ import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { useLead } from "@/shared/api/leads";
+import { useLead, useUpdateLead } from "@/shared/api/leads";
 import { toast } from "@/hooks/use-toast";
-import { apiClient, ApiError } from "@/shared/api/client";
+import { ApiError } from "@/shared/api/client";
+import { LEAD_STATUSES } from "@/shared/constants";
 
 const AdminLeadDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: lead, isLoading, isError, error, refetch } = useLead(id!);
+  const updateLead = useUpdateLead(id!);
   const [comments, setComments] = useState("");
 
   // Seed the comment box once the lead arrives (data is undefined while loading).
@@ -22,13 +31,27 @@ const AdminLeadDetail = () => {
     if (lead) setComments(lead.adminComment ?? "");
   }, [lead]);
 
-  const handleSaveComments = async () => {
-    try {
-      await apiClient(`/leads/${id}`, { method: "PATCH", body: { adminComment: comments } });
-      toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") });
-    } catch {
-      toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" });
-    }
+  const handleSaveComments = () => {
+    updateLead.mutate(
+      { adminComment: comments },
+      {
+        onSuccess: () =>
+          toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") }),
+        onError: () =>
+          toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" }),
+      },
+    );
+  };
+
+  const handleStatusChange = (status: string) => {
+    updateLead.mutate(
+      { status },
+      {
+        onSuccess: () => toast({ title: t("admin.status_updated") }),
+        onError: () =>
+          toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" }),
+      },
+    );
   };
 
   if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
@@ -91,6 +114,20 @@ const AdminLeadDetail = () => {
 
       <div className="container px-6 py-10 max-w-4xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+          {/* Triage status */}
+          <DetailSection title={t("admin.status")}>
+            <Select value={lead.status} onValueChange={handleStatusChange} disabled={updateLead.isPending}>
+              <SelectTrigger className="bg-navy-light border-primary-foreground/10 text-primary-foreground sm:max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LEAD_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </DetailSection>
+
           {/* Personal */}
           <DetailSection title={t("admin.personal_info")}>
             <DetailGrid>

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { useLeads, useLead, useSubmitLead } from "./leads";
+import { useLeads, useLead, useSubmitLead, useUpdateLead } from "./leads";
 import { ApiError } from "./client";
 import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 
@@ -143,6 +143,22 @@ describe("useSubmitLead", () => {
       heightCm: 182,
       preferredLanguage: "FR",
     });
+  });
+});
+
+describe("useUpdateLead", () => {
+  it("PATCHes the lead with the given fields", async () => {
+    mockApiClient.mockResolvedValue({ id: "lead-1", status: "QUALIFIED" });
+
+    const { result } = renderHook(() => useUpdateLead("lead-1"), { wrapper });
+    result.current.mutate({ status: "QUALIFIED" });
+
+    await waitFor(() =>
+      expect(mockApiClient).toHaveBeenCalledWith("/leads/lead-1", {
+        method: "PATCH",
+        body: { status: "QUALIFIED" },
+      }),
+    );
   });
 });
 

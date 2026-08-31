@@ -16,6 +16,19 @@ export const SPORTS = [
 
 export const GENDERS = ["Male", "Female", "Other"] as const;
 
+/** Lead triage states. `value` must match the server's LeadStatus enum. */
+export const LEAD_STATUSES = [
+  { value: "NEW", label: "New" },
+  { value: "CONTACTED", label: "Contacted" },
+  { value: "QUALIFIED", label: "Qualified" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "CONVERTED", label: "Converted" },
+] as const;
+
+export const LEAD_STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  LEAD_STATUSES.map((s) => [s.value, s.label]),
+);
+
 /** How a lead found us. `value` must match the server's LeadSource enum. */
 export const LEAD_SOURCES = [
   { value: "INSTAGRAM", label: "Instagram" },

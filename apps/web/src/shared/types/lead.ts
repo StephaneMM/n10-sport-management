@@ -113,6 +113,7 @@ export interface Lead {
   highlightLinks: string[];
   messageToUs?: string;
   adminComment?: string;
+  status: string;
   source?: string;
   preferredLanguage?: string;
   consentToContact: boolean;
@@ -135,6 +136,7 @@ export interface LeadListFilters {
   sport?: string;
   nationality?: string;
   gender?: string;
+  status?: string;
   dateFrom?: string;
   dateTo?: string;
   sortBy?: LeadSortField;
