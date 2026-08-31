@@ -13,6 +13,7 @@ test('a prospect who fills the public form is visible to an admin', async ({ pag
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Phone').fill('+1 555 0100');
   await page.getByLabel('Country').fill('Brazil');
+  await page.getByLabel(/date of birth/i).fill('14/05/2008');
   await page.getByLabel('Nationality').fill('Brazilian');
 
   await page.getByRole('combobox').filter({ hasText: /select gender/i }).click();
@@ -23,6 +24,11 @@ test('a prospect who fills the public form is visible to an admin', async ({ pag
   await page.getByLabel('Positions').fill('Forward');
   await page.getByLabel('Height (cm)').fill('180');
   await page.getByLabel('Weight (kg)').fill('75');
+
+  await page.getByRole('combobox').filter({ hasText: /select an option/i }).click();
+  await page.getByRole('option', { name: 'Instagram', exact: true }).click();
+
+  await page.getByRole('checkbox').check();
 
   await page.getByRole('button', { name: /submit application/i }).click();
   await expect(page.getByText(/thank you/i)).toBeVisible();

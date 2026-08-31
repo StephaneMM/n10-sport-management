@@ -23,6 +23,34 @@ enum Role {
   COACH
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  REJECTED
+  CONVERTED
+}
+
+enum Locale {
+  EN
+  FR
+  ES
+  AR
+}
+
+enum LeadSource {
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  YOUTUBE
+  GOOGLE_SEARCH
+  REFERRAL
+  COACH
+  AGENT
+  EVENT
+  OTHER
+}
+
 enum DocumentType {
   GOVERNMENT_ID
   HS_TRANSCRIPT
@@ -64,6 +92,9 @@ model Lead {
   country          String
   
   // Demographics & Sport
+  // Mandatory — drives recruiting class and the eligibility clock. Enforced by
+  // createLeadSchema on the way in and NOT NULL in the database.
+  dateOfBirth      DateTime
   nationality      String
   gender           String
   sport            String
@@ -79,9 +110,34 @@ model Lead {
   currentClub      String?
   highlightLinks   String[]
   
+  // Attribution — how the lead found us. Required on new submissions
+  // (createLeadSchema); nullable only for rows that predate the field.
+  source           LeadSource?
+
+  // The site language the applicant used, captured automatically so follow-up
+  // happens in the right language. Nullable: older rows and non-browser API
+  // callers may not set it.
+  preferredLanguage Locale?
+
+  // The applicant ticked "I agree to be contacted". createLeadSchema requires
+  // it to be true; the default only covers rows that predate the field, whose
+  // consent we never captured.
+  consentToContact Boolean @default(false)
+
+  // Parent / guardian contact. createLeadSchema requires name, email and phone
+  // when the applicant is under 18; adults leave them null.
+  guardianName         String?
+  guardianEmail        String?
+  guardianPhone        String?
+  guardianRelationship String?
+
   // Messages & Admin Notes
   messageToUs      String?  // Not mandatory
   adminComment     String?  // Admin adds this later
+
+  // Triage state, moved by an admin as the lead is worked. Every new
+  // submission starts at NEW.
+  status           LeadStatus @default(NEW)
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -92,6 +148,7 @@ model Lead {
   @@index([nationality])
   @@index([gender])
   @@index([country])
+  @@index([status])
 }
 
 

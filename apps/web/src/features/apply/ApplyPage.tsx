@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
+import { leadFormSchema, isApplicantMinor, type LeadFormValues } from "@/shared/types/lead";
 import { useSubmitLead } from "@/shared/api/leads";
-import { SPORTS, GENDERS } from "@/shared/constants";
+import { SPORTS, GENDERS, LEAD_SOURCES } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const ApplyPage = () => {
@@ -26,12 +27,16 @@ const ApplyPage = () => {
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
       firstName: "", lastName: "", email: "", phone: "",
-      country: "", nationality: "", gender: "", sport: "",
+      country: "", dateOfBirth: "", nationality: "", gender: "", sport: "",
       positions: "", heightCm: undefined as unknown as number, weightKg: undefined as unknown as number,
       verticalJumpCm: "", league: "", currentClub: "",
-      highlightLinks: "", messageToUs: "",
+      highlightLinks: "", messageToUs: "", source: "",
+      consentToContact: false,
+      guardianName: "", guardianEmail: "", guardianPhone: "", guardianRelationship: "",
     },
   });
+
+  const showGuardian = isApplicantMinor(form.watch("dateOfBirth"));
 
   const onSubmit = (data: LeadFormValues) => {
     mutation.mutate(data, {
@@ -101,6 +106,7 @@ const ApplyPage = () => {
                   <Field form={form} name="email" label={t("apply.email")} type="email" />
                   <Field form={form} name="phone" label={t("apply.phone")} type="tel" />
                   <Field form={form} name="country" label={t("apply.country")} />
+                  <DateOfBirthField form={form} label={t("apply.date_of_birth")} placeholder={t("apply.date_of_birth_placeholder")} />
                   <Field form={form} name="nationality" label={t("apply.nationality")} />
                   <FormField
                     control={form.control}
@@ -124,6 +130,21 @@ const ApplyPage = () => {
                   />
                 </div>
               </Section>
+
+              {/* Guardian — only when the applicant is under 18 */}
+              {showGuardian && (
+                <Section title={t("apply.guardian_info")}>
+                  <p className="font-body text-primary-foreground/50 text-sm mb-4 -mt-2">
+                    {t("apply.guardian_hint")}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field form={form} name="guardianName" label={t("apply.guardian_name")} />
+                    <Field form={form} name="guardianRelationship" label={t("apply.guardian_relationship")} placeholder={t("apply.guardian_relationship_placeholder")} />
+                    <Field form={form} name="guardianEmail" label={t("apply.guardian_email")} type="email" />
+                    <Field form={form} name="guardianPhone" label={t("apply.guardian_phone")} type="tel" />
+                  </div>
+                </Section>
+              )}
 
               {/* Sport Info */}
               <Section title={t("apply.athletic_profile")}>
@@ -179,6 +200,53 @@ const ApplyPage = () => {
                 />
               </Section>
 
+              <Section title={t("apply.how_heard")}>
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-primary-foreground/80 font-body text-sm">{t("apply.how_heard")}</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-navy-light border-primary-foreground/10 text-primary-foreground">
+                            <SelectValue placeholder={t("apply.select_source")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {LEAD_SOURCES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Section>
+
+              <FormField
+                control={form.control}
+                name="consentToContact"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start gap-3 rounded-md border border-primary-foreground/10 bg-navy-light p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="mt-0.5 border-primary-foreground/30 data-[state=checked]:bg-gold data-[state=checked]:text-primary"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-snug">
+                      <FormLabel className="text-primary-foreground/80 font-body text-sm font-normal">
+                        {t("apply.consent_label")}
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
               <Button
                 type="submit"
                 size="lg"
@@ -203,6 +271,45 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="font-display text-xl font-semibold text-gold mb-4">{title}</h2>
       {children}
     </div>
+  );
+}
+
+/** Digits only, auto-inserting slashes so the value can only ever be DD/MM/YYYY. */
+function formatDateOfBirthInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
+    .filter((part) => part.length > 0)
+    .join("/");
+}
+
+function DateOfBirthField({
+  form, label, placeholder,
+}: {
+  form: ReturnType<typeof useForm<LeadFormValues>>;
+  label: string;
+  placeholder: string;
+}) {
+  return (
+    <FormField
+      control={form.control}
+      name="dateOfBirth"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="text-primary-foreground/80 font-body text-sm">{label}</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              inputMode="numeric"
+              placeholder={placeholder}
+              value={field.value ?? ""}
+              onChange={(e) => field.onChange(formatDateOfBirthInput(e.target.value))}
+              className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30"
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }
 

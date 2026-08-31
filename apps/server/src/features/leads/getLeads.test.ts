@@ -89,6 +89,27 @@ describe('GET /api/leads', () => {
     expect(where.createdAt.lte).toEqual(new Date('2026-06-01'));
   });
 
+  it('filters by status', async () => {
+    await listLeads('?status=QUALIFIED');
+
+    const { where } = mockedPrisma.lead.findMany.mock.calls[0][0];
+    expect(where.status).toBe('QUALIFIED');
+  });
+
+  it('filters by source', async () => {
+    await listLeads('?source=REFERRAL');
+
+    const { where } = mockedPrisma.lead.findMany.mock.calls[0][0];
+    expect(where.source).toBe('REFERRAL');
+  });
+
+  it('filters by preferredLanguage', async () => {
+    await listLeads('?preferredLanguage=FR');
+
+    const { where } = mockedPrisma.lead.findMany.mock.calls[0][0];
+    expect(where.preferredLanguage).toBe('FR');
+  });
+
   it('honours sortBy / sortOrder', async () => {
     await listLeads('?sortBy=lastName&sortOrder=asc');
     expect(mockedPrisma.lead.findMany).toHaveBeenCalledWith(
