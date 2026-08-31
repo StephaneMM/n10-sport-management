@@ -16,7 +16,8 @@ import { PrismaPg } from '@prisma/adapter-pg';
  */
 
 const connectionString = process.env.DATABASE_URL;
-const adminEmail = process.env.ADMIN_EMAIL;
+// Stored lowercased to match the case-insensitive handling in auth.schema.
+const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD;
 
 if (!connectionString) {

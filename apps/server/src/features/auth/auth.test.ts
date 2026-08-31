@@ -118,6 +118,19 @@ describe('POST /api/auth/register', () => {
     expect(response.status).toBe(409);
     expect(mockedPrisma.user.create).not.toHaveBeenCalled();
   });
+
+  it('lowercases and trims the email before storing it', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: '  Prospect@N10.TEST  ', password: VALID_PASSWORD });
+
+    expect(mockedPrisma.user.findUnique).toHaveBeenCalledWith({
+      where: { email: 'prospect@n10.test' },
+    });
+    expect(mockedPrisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ email: 'prospect@n10.test' }) }),
+    );
+  });
 });
 
 describe('POST /api/auth/login', () => {
@@ -165,6 +178,17 @@ describe('POST /api/auth/login', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.error).toBe('Invalid email and/or password');
+  });
+
+  it('logs in regardless of the email case the caller typed', async () => {
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email: '  MEMBER@N10.test ', password: VALID_PASSWORD });
+
+    expect(response.status).toBe(200);
+    expect(mockedPrisma.user.findUnique).toHaveBeenCalledWith({
+      where: { email: 'member@n10.test' },
+    });
   });
 });
 
