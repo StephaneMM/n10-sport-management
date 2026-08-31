@@ -84,9 +84,10 @@ const validFormValues: LeadFormValues = {
   highlightLinks: "",
   messageToUs: "",
   source: "INSTAGRAM",
+  consentToContact: true,
 };
 
-describe("leadFormSchema — date of birth", () => {
+describe("leadFormSchema", () => {
   it.each(["", "2008-05-14", "5/14/2008", "32/01/2008", "14/05/2999"])(
     "rejects %j",
     (dateOfBirth) => {
@@ -100,6 +101,12 @@ describe("leadFormSchema — date of birth", () => {
 
   it("requires a source", () => {
     expect(leadFormSchema.safeParse({ ...validFormValues, source: "" }).success).toBe(false);
+  });
+
+  it("requires consent to contact", () => {
+    expect(
+      leadFormSchema.safeParse({ ...validFormValues, consentToContact: false }).success,
+    ).toBe(false);
   });
 });
 

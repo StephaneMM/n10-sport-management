@@ -54,6 +54,9 @@ export const leadFormSchema = z.object({
   messageToUs: z.string().optional(),
   adminComment: z.string().optional(),
   source: z.string().min(1, "Please tell us how you heard about us"),
+  consentToContact: z
+    .boolean()
+    .refine((agreed) => agreed === true, "You must agree to be contacted"),
 });
 
 export type LeadFormValues = z.infer<typeof leadFormSchema>;
@@ -81,6 +84,7 @@ export interface Lead {
   messageToUs?: string;
   adminComment?: string;
   source?: string;
+  consentToContact: boolean;
   createdAt: string;
   updatedAt: string;
 }

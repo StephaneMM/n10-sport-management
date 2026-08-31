@@ -28,6 +28,9 @@ export const createLeadSchema = z.object({
     
     messageToUs: z.string().optional(),
     source: z.nativeEnum(LeadSource),
+    consentToContact: z.literal(true, {
+      errorMap: () => ({ message: "You must agree to be contacted" }),
+    }),
   }),
 });
 

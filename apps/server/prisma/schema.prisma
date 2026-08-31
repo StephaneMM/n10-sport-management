@@ -107,6 +107,11 @@ model Lead {
   // (createLeadSchema); nullable only for rows that predate the field.
   source           LeadSource?
 
+  // The applicant ticked "I agree to be contacted". createLeadSchema requires
+  // it to be true; the default only covers rows that predate the field, whose
+  // consent we never captured.
+  consentToContact Boolean @default(false)
+
   // Messages & Admin Notes
   messageToUs      String?  // Not mandatory
   adminComment     String?  // Admin adds this later

@@ -22,6 +22,7 @@ const validLead = {
   heightCm: 182,
   weightKg: 70,
   source: 'INSTAGRAM',
+  consentToContact: true,
 };
 
 describe('POST /api/leads', () => {
@@ -68,6 +69,8 @@ describe('POST /api/leads', () => {
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
     ['a missing source', { ...validLead, source: undefined }],
     ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
+    ['consent not given', { ...validLead, consentToContact: false }],
+    ['missing consent', { ...validLead, consentToContact: undefined }],
   ])('rejects %s with 400', async (_label, body) => {
     const response = await request(app).post('/api/leads').send(body);
 

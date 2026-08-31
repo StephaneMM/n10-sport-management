@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 import { useSubmitLead } from "@/shared/api/leads";
@@ -30,6 +31,7 @@ const ApplyPage = () => {
       positions: "", heightCm: undefined as unknown as number, weightKg: undefined as unknown as number,
       verticalJumpCm: "", league: "", currentClub: "",
       highlightLinks: "", messageToUs: "", source: "",
+      consentToContact: false,
     },
   });
 
@@ -204,6 +206,28 @@ const ApplyPage = () => {
                   )}
                 />
               </Section>
+
+              <FormField
+                control={form.control}
+                name="consentToContact"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start gap-3 rounded-md border border-primary-foreground/10 bg-navy-light p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="mt-0.5 border-primary-foreground/30 data-[state=checked]:bg-gold data-[state=checked]:text-primary"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-snug">
+                      <FormLabel className="text-primary-foreground/80 font-body text-sm font-normal">
+                        {t("apply.consent_label")}
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
 
               <Button
                 type="submit"
