@@ -66,6 +66,31 @@ describe("AdminLeadDetail", () => {
     expect(await screen.findByText("Contacted")).toBeInTheDocument();
   });
 
+  it("shows the applicant's age and consent state", async () => {
+    renderDetail();
+    await screen.findByText("Contacted");
+    expect(screen.getByText("18")).toBeInTheDocument();
+    expect(screen.getByText("admin.consent_yes")).toBeInTheDocument();
+  });
+
+  it("shows the guardian section only when guardian data is present", async () => {
+    mockApiClient.mockResolvedValue(lead);
+    const { unmount } = renderDetail();
+    await screen.findByText("Contacted");
+    expect(screen.queryByText("admin.guardian")).toBeNull();
+    unmount();
+
+    mockApiClient.mockResolvedValue({
+      ...lead,
+      guardianName: "Rosa Silva",
+      guardianEmail: "rosa@example.com",
+      guardianPhone: "+55 11 98888",
+    });
+    renderDetail();
+    await screen.findByText("Rosa Silva");
+    expect(screen.getByText("admin.guardian")).toBeInTheDocument();
+  });
+
   it("saves an admin comment with a PATCH", async () => {
     renderDetail();
     await screen.findByText("Contacted");

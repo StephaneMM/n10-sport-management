@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/select";
 
 import { useLead, useUpdateLead } from "@/shared/api/leads";
+import { ageInYears } from "@/shared/types/lead";
 import { toast } from "@/hooks/use-toast";
 import { ApiError } from "@/shared/api/client";
-import { LEAD_STATUSES } from "@/shared/constants";
+import { LEAD_STATUSES, LEAD_SOURCES } from "@/shared/constants";
 
 const AdminLeadDetail = () => {
   const { t } = useTranslation();
@@ -136,8 +137,46 @@ const AdminLeadDetail = () => {
               <DetailItem label={t("admin.country")} value={lead.country} />
               <DetailItem label={t("admin.nationality")} value={lead.nationality} />
               <DetailItem label={t("apply.gender")} value={lead.gender} />
+              <DetailItem label={t("admin.date_of_birth")} value={formatDate(lead.dateOfBirth)} />
+              <DetailItem
+                label={t("admin.age")}
+                value={String(ageInYears(new Date(lead.dateOfBirth)))}
+              />
             </DetailGrid>
           </DetailSection>
+
+          {/* Intake */}
+          <DetailSection title={t("admin.intake")}>
+            <DetailGrid>
+              <DetailItem label={t("admin.source")} value={sourceLabel(lead.source)} />
+              <DetailItem
+                label={t("admin.preferred_language")}
+                value={lead.preferredLanguage ? t(`language.${lead.preferredLanguage.toLowerCase()}`) : "—"}
+              />
+              <DetailItem
+                label={t("admin.consent")}
+                value={lead.consentToContact ? t("admin.consent_yes") : t("admin.consent_no")}
+              />
+            </DetailGrid>
+          </DetailSection>
+
+          {/* Guardian — present only for minors */}
+          {lead.guardianName && (
+            <DetailSection title={t("admin.guardian")}>
+              <DetailGrid>
+                <DetailItem label={t("admin.guardian_name")} value={lead.guardianName} />
+                {lead.guardianRelationship && (
+                  <DetailItem label={t("admin.guardian_relationship")} value={lead.guardianRelationship} />
+                )}
+                {lead.guardianEmail && (
+                  <DetailItem label={t("admin.guardian_email")} value={lead.guardianEmail} />
+                )}
+                {lead.guardianPhone && (
+                  <DetailItem label={t("admin.guardian_phone")} value={lead.guardianPhone} />
+                )}
+              </DetailGrid>
+            </DetailSection>
+          )}
 
           {/* Athletic */}
           <DetailSection title={t("admin.athletic_profile")}>
@@ -191,7 +230,7 @@ const AdminLeadDetail = () => {
 
           {/* Meta */}
           <p className="font-body text-xs text-primary-foreground/30">
-            {t("admin.submitted")}: {new Date(lead.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+            {t("admin.submitted")}: {formatDate(lead.createdAt)}
           </p>
         </motion.div>
       </div>
@@ -200,6 +239,19 @@ const AdminLeadDetail = () => {
 };
 
 // ─── Helpers ──────────────────────────────────────────────
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function sourceLabel(source: string | undefined): string {
+  if (!source) return "—";
+  return LEAD_SOURCES.find((s) => s.value === source)?.label ?? source;
+}
 
 function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (

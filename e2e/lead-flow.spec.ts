@@ -48,10 +48,20 @@ test('a prospect who fills the public form is visible to an admin', async ({ pag
   await expect(page.getByRole('cell', { name: email })).toBeVisible();
   await expect(page.getByRole('row', { name: new RegExp(lastName) })).toHaveCount(1);
 
-  // 5. Open the detail view and save an admin comment.
+  // 5. Open the detail view, move the lead through triage, save a comment.
   await page.getByRole('link', { name: /view details/i }).click();
   await expect(page.getByText(email)).toBeVisible();
+
+  await page.getByRole('combobox').click();
+  await page.getByRole('option', { name: 'Qualified', exact: true }).click();
+  await expect(page.getByText('Status updated', { exact: true })).toBeVisible();
+
   await page.getByPlaceholder(/internal notes/i).fill('Reviewed via e2e');
   await page.getByRole('button', { name: /update comments/i }).click();
   await expect(page.getByText('Comments updated', { exact: true })).toBeVisible();
+
+  // 6. The new status is reflected back in the dashboard list.
+  await page.goto('/admin/dashboard');
+  await page.getByLabel('Search name or email').fill(email);
+  await expect(page.getByRole('row', { name: new RegExp(lastName) })).toContainText('Qualified');
 });
