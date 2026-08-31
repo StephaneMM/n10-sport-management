@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LeadStatus } from '@prisma/client';
 
 export const createLeadSchema = z.object({
   body: z.object({
@@ -43,6 +44,7 @@ export const listLeadsQuerySchema = z.object({
   sport: z.string().trim().min(1).optional(),
   nationality: z.string().trim().min(1).optional(),
   gender: z.string().trim().min(1).optional(),
+  status: z.nativeEnum(LeadStatus).optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
   sortBy: z.enum(LEAD_SORT_FIELDS).default('createdAt'),
@@ -55,9 +57,14 @@ export const updateLeadSchema = z.object({
   params: z.object({
     id: z.string().uuid("Invalid Lead ID format"),
   }),
-  body: z.object({
-    adminComment: z.string().min(1, "Comment cannot be empty"),
-  }),
+  body: z
+    .object({
+      adminComment: z.string().min(1, "Comment cannot be empty").optional(),
+      status: z.nativeEnum(LeadStatus).optional(),
+    })
+    .refine((data) => data.adminComment !== undefined || data.status !== undefined, {
+      message: "Provide adminComment and/or status to update",
+    }),
 });
 
 

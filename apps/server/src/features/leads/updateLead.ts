@@ -14,13 +14,16 @@ export const updateLeadHandler = async (
   }
 
   const { id } = req.params;
-  const { adminComment } = req.body;
+  const { adminComment, status } = req.body;
 
-  // 2. Update the record. If the id is unknown Prisma throws P2025, which the
-  // errorHandler turns into a 404.
+  // 2. Update only the fields the admin sent. If the id is unknown Prisma
+  // throws P2025, which the errorHandler turns into a 404.
   const updatedLead = await prisma.lead.update({
     where: { id },
-    data: { adminComment },
+    data: {
+      ...(adminComment !== undefined ? { adminComment } : {}),
+      ...(status !== undefined ? { status } : {}),
+    },
   });
 
   // 3. Send the updated lead back to the frontend

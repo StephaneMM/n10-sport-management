@@ -23,6 +23,14 @@ enum Role {
   COACH
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  REJECTED
+  CONVERTED
+}
+
 enum DocumentType {
   GOVERNMENT_ID
   HS_TRANSCRIPT
@@ -83,6 +91,10 @@ model Lead {
   messageToUs      String?  // Not mandatory
   adminComment     String?  // Admin adds this later
 
+  // Triage state, moved by an admin as the lead is worked. Every new
+  // submission starts at NEW.
+  status           LeadStatus @default(NEW)
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -92,6 +104,7 @@ model Lead {
   @@index([nationality])
   @@index([gender])
   @@index([country])
+  @@index([status])
 }
 
 

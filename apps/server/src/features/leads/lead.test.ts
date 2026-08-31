@@ -89,6 +89,55 @@ describe('PATCH /api/leads/:id', () => {
     });
   });
 
+  it('updates the status on its own', async () => {
+    mockedPrisma.lead.update.mockResolvedValue({ id: LEAD_ID, status: 'CONTACTED' });
+
+    const response = await request(app)
+      .patch(`/api/leads/${LEAD_ID}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'CONTACTED' });
+
+    expect(response.status).toBe(200);
+    expect(mockedPrisma.lead.update).toHaveBeenCalledWith({
+      where: { id: LEAD_ID },
+      data: { status: 'CONTACTED' },
+    });
+  });
+
+  it('updates status and comment together', async () => {
+    mockedPrisma.lead.update.mockResolvedValue({ id: LEAD_ID });
+
+    await request(app)
+      .patch(`/api/leads/${LEAD_ID}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ adminComment: 'called, keen', status: 'QUALIFIED' });
+
+    expect(mockedPrisma.lead.update).toHaveBeenCalledWith({
+      where: { id: LEAD_ID },
+      data: { adminComment: 'called, keen', status: 'QUALIFIED' },
+    });
+  });
+
+  it('rejects an unknown status with 400', async () => {
+    const response = await request(app)
+      .patch(`/api/leads/${LEAD_ID}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'MAYBE_LATER' });
+
+    expect(response.status).toBe(400);
+    expect(mockedPrisma.lead.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects an empty payload with 400', async () => {
+    const response = await request(app)
+      .patch(`/api/leads/${LEAD_ID}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(mockedPrisma.lead.update).not.toHaveBeenCalled();
+  });
+
   it('returns 403 for a non-admin', async () => {
     const response = await request(app)
       .patch(`/api/leads/${LEAD_ID}`)
