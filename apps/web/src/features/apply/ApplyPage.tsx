@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
+import { leadFormSchema, isApplicantMinor, type LeadFormValues } from "@/shared/types/lead";
 import { useSubmitLead } from "@/shared/api/leads";
 import { SPORTS, GENDERS, LEAD_SOURCES } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -32,8 +32,11 @@ const ApplyPage = () => {
       verticalJumpCm: "", league: "", currentClub: "",
       highlightLinks: "", messageToUs: "", source: "",
       consentToContact: false,
+      guardianName: "", guardianEmail: "", guardianPhone: "", guardianRelationship: "",
     },
   });
+
+  const showGuardian = isApplicantMinor(form.watch("dateOfBirth"));
 
   const onSubmit = (data: LeadFormValues) => {
     mutation.mutate(data, {
@@ -127,6 +130,21 @@ const ApplyPage = () => {
                   />
                 </div>
               </Section>
+
+              {/* Guardian — only when the applicant is under 18 */}
+              {showGuardian && (
+                <Section title={t("apply.guardian_info")}>
+                  <p className="font-body text-primary-foreground/50 text-sm mb-4 -mt-2">
+                    {t("apply.guardian_hint")}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field form={form} name="guardianName" label={t("apply.guardian_name")} />
+                    <Field form={form} name="guardianRelationship" label={t("apply.guardian_relationship")} placeholder={t("apply.guardian_relationship_placeholder")} />
+                    <Field form={form} name="guardianEmail" label={t("apply.guardian_email")} type="email" />
+                    <Field form={form} name="guardianPhone" label={t("apply.guardian_phone")} type="tel" />
+                  </div>
+                </Section>
+              )}
 
               {/* Sport Info */}
               <Section title={t("apply.athletic_profile")}>

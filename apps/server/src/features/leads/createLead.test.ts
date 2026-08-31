@@ -6,6 +6,15 @@ jest.mock('../../lib/prisma', () => ({
   prisma: { lead: { create: jest.fn() } },
 }));
 
+// This suite exercises validation with many submissions; the real
+// publicLeadLimiter (15/hour) would start returning 429. Rate limiting has its
+// own coverage in rateLimit.test.ts.
+type Next = () => void;
+jest.mock('../../middlewares/rateLimit', () => ({
+  publicLeadLimiter: (_req: unknown, _res: unknown, next: Next) => next(),
+  authLimiter: (_req: unknown, _res: unknown, next: Next) => next(),
+}));
+
 const mockedPrisma = prisma as unknown as { lead: { create: jest.Mock } };
 
 const validLead = {
@@ -53,6 +62,23 @@ describe('POST /api/leads', () => {
     expect(data.highlightLinks).toEqual([]);
   });
 
+  it('accepts a minor when guardian contact is provided', async () => {
+    const response = await request(app)
+      .post('/api/leads')
+      .send({
+        ...validLead,
+        dateOfBirth: '2012-06-15',
+        guardianName: 'Rosa Silva',
+        guardianEmail: 'Rosa.Silva@Example.com',
+        guardianPhone: '+55 11 98888-0000',
+        guardianRelationship: 'Mother',
+      });
+
+    expect(response.status).toBe(201);
+    const { data } = mockedPrisma.lead.create.mock.calls[0][0];
+    expect(data.guardianEmail).toBe('rosa.silva@example.com');
+  });
+
   it('coerces the ISO dateOfBirth string to a Date', async () => {
     await request(app).post('/api/leads').send(validLead);
     const { data } = mockedPrisma.lead.create.mock.calls[0][0];
@@ -71,6 +97,11 @@ describe('POST /api/leads', () => {
     ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
     ['consent not given', { ...validLead, consentToContact: false }],
     ['missing consent', { ...validLead, consentToContact: undefined }],
+    ['a minor without guardian contact', { ...validLead, dateOfBirth: '2012-06-15' }],
+    [
+      'a minor missing the guardian email',
+      { ...validLead, dateOfBirth: '2012-06-15', guardianName: 'Rosa Silva', guardianPhone: '+55 11 8888' },
+    ],
   ])('rejects %s with 400', async (_label, body) => {
     const response = await request(app).post('/api/leads').send(body);
 

@@ -108,6 +108,19 @@ describe("leadFormSchema", () => {
       leadFormSchema.safeParse({ ...validFormValues, consentToContact: false }).success,
     ).toBe(false);
   });
+
+  it("requires guardian contact when the applicant is a minor", () => {
+    const minor = { ...validFormValues, dateOfBirth: "15/06/2012" };
+    expect(leadFormSchema.safeParse(minor).success).toBe(false);
+    expect(
+      leadFormSchema.safeParse({
+        ...minor,
+        guardianName: "Rosa Silva",
+        guardianEmail: "rosa@example.com",
+        guardianPhone: "+55 11 98888-0000",
+      }).success,
+    ).toBe(true);
+  });
 });
 
 describe("useSubmitLead", () => {

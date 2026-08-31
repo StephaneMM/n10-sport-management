@@ -28,6 +28,22 @@ export function dateOfBirthToIso(value: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+export const MINOR_AGE = 18;
+
+/** Whole years between `dob` and now. */
+export function ageInYears(dob: Date, on: Date = new Date()): number {
+  let age = on.getFullYear() - dob.getFullYear();
+  const monthDelta = on.getMonth() - dob.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && on.getDate() < dob.getDate())) age -= 1;
+  return age;
+}
+
+/** True when a valid DD/MM/YYYY date of birth makes the applicant under 18. */
+export function isApplicantMinor(dateOfBirth: string): boolean {
+  if (!isValidDateOfBirth(dateOfBirth)) return false;
+  return ageInYears(new Date(dateOfBirthToIso(dateOfBirth))) < MINOR_AGE;
+}
+
 // ─── Lead Form Schema ────────────────────────────────────
 
 export const leadFormSchema = z.object({
@@ -57,6 +73,20 @@ export const leadFormSchema = z.object({
   consentToContact: z
     .boolean()
     .refine((agreed) => agreed === true, "You must agree to be contacted"),
+  guardianName: z.string().optional(),
+  guardianEmail: z.string().optional(),
+  guardianPhone: z.string().optional(),
+  guardianRelationship: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!isApplicantMinor(data.dateOfBirth)) return;
+  for (const field of ["guardianName", "guardianEmail", "guardianPhone"] as const) {
+    if (!data[field]?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: "Required for applicants under 18" });
+    }
+  }
+  if (data.guardianEmail?.trim() && !z.string().email().safeParse(data.guardianEmail.trim()).success) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["guardianEmail"], message: "Invalid email address" });
+  }
 });
 
 export type LeadFormValues = z.infer<typeof leadFormSchema>;
@@ -85,6 +115,10 @@ export interface Lead {
   adminComment?: string;
   source?: string;
   consentToContact: boolean;
+  guardianName?: string;
+  guardianEmail?: string;
+  guardianPhone?: string;
+  guardianRelationship?: string;
   createdAt: string;
   updatedAt: string;
 }

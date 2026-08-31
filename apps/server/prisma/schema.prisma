@@ -112,6 +112,13 @@ model Lead {
   // consent we never captured.
   consentToContact Boolean @default(false)
 
+  // Parent / guardian contact. createLeadSchema requires name, email and phone
+  // when the applicant is under 18; adults leave them null.
+  guardianName         String?
+  guardianEmail        String?
+  guardianPhone        String?
+  guardianRelationship String?
+
   // Messages & Admin Notes
   messageToUs      String?  // Not mandatory
   adminComment     String?  // Admin adds this later

@@ -1,14 +1,26 @@
 import { z } from 'zod';
 import { LeadStatus, LeadSource } from '@prisma/client';
 
-export const createLeadSchema = z.object({
-  body: z.object({
+/** Whole years between `dob` and `on`. */
+export function ageInYears(dob: Date, on: Date = new Date()): number {
+  let age = on.getFullYear() - dob.getFullYear();
+  const monthDelta = on.getMonth() - dob.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && on.getDate() < dob.getDate())) {
+    age -= 1;
+  }
+  return age;
+}
+
+export const MINOR_AGE = 18;
+
+const createLeadBody = z
+  .object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().trim().toLowerCase().email("Invalid email address"),
     phone: z.string().min(1, "Phone number is required"),
     country: z.string().min(1, "Country is required"),
-    
+
     dateOfBirth: z.coerce
       .date()
       .min(new Date('1940-01-01'), "Date of birth is not valid")
@@ -17,22 +29,41 @@ export const createLeadSchema = z.object({
     gender: z.string().min(1, "Gender is required"),
     sport: z.string().min(1, "Sport is required"),
     positions: z.array(z.string()).min(1, "At least one position is required"),
-    
+
     heightCm: z.number().positive("Height must be positive"),
     weightKg: z.number().positive("Weight must be positive"),
     verticalJumpCm: z.number().positive().optional(),
-    
+
     league: z.string().optional(),
     currentClub: z.string().optional(),
     highlightLinks: z.array(z.string().url("Must be a valid URL")).optional().default([]),
-    
+
     messageToUs: z.string().optional(),
     source: z.nativeEnum(LeadSource),
     consentToContact: z.literal(true, {
       errorMap: () => ({ message: "You must agree to be contacted" }),
     }),
-  }),
-});
+
+    guardianName: z.string().trim().min(1).optional(),
+    guardianEmail: z.string().trim().toLowerCase().email("Invalid guardian email").optional(),
+    guardianPhone: z.string().trim().min(1).optional(),
+    guardianRelationship: z.string().trim().min(1).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (ageInYears(data.dateOfBirth) >= MINOR_AGE) return;
+    // Applicant is a minor — a reachable guardian is mandatory.
+    for (const field of ['guardianName', 'guardianEmail', 'guardianPhone'] as const) {
+      if (!data[field]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: 'Required for applicants under 18',
+        });
+      }
+    }
+  });
+
+export const createLeadSchema = z.object({ body: createLeadBody });
 
 export const getLeadSchema = z.object({
   params: z.object({

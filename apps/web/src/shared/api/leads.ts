@@ -34,6 +34,11 @@ export function useSubmitLead() {
           : [],
         verticalJumpCm:
           data.verticalJumpCm === 0 ? undefined : data.verticalJumpCm,
+        // Drop empty guardian fields so the API sees them as absent, not "".
+        guardianName: data.guardianName?.trim() || undefined,
+        guardianEmail: data.guardianEmail?.trim() || undefined,
+        guardianPhone: data.guardianPhone?.trim() || undefined,
+        guardianRelationship: data.guardianRelationship?.trim() || undefined,
       };
       return apiClient<Lead>("/leads", { method: "POST", body: payload });
     },
