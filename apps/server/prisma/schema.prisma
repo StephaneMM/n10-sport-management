@@ -31,6 +31,13 @@ enum LeadStatus {
   CONVERTED
 }
 
+enum Locale {
+  EN
+  FR
+  ES
+  AR
+}
+
 enum LeadSource {
   INSTAGRAM
   FACEBOOK
@@ -106,6 +113,11 @@ model Lead {
   // Attribution — how the lead found us. Required on new submissions
   // (createLeadSchema); nullable only for rows that predate the field.
   source           LeadSource?
+
+  // The site language the applicant used, captured automatically so follow-up
+  // happens in the right language. Nullable: older rows and non-browser API
+  // callers may not set it.
+  preferredLanguage Locale?
 
   // The applicant ticked "I agree to be contacted". createLeadSchema requires
   // it to be true; the default only covers rows that predate the field, whose

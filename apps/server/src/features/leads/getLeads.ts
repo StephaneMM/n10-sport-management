@@ -20,6 +20,7 @@ export const getLeadsHandler = async (req: Request, res: Response): Promise<void
     gender,
     status,
     source,
+    preferredLanguage,
     dateFrom,
     dateTo,
     sortBy,
@@ -32,6 +33,7 @@ export const getLeadsHandler = async (req: Request, res: Response): Promise<void
     ...(gender ? { gender } : {}),
     ...(status ? { status } : {}),
     ...(source ? { source } : {}),
+    ...(preferredLanguage ? { preferredLanguage } : {}),
     ...(dateFrom || dateTo
       ? {
           createdAt: {

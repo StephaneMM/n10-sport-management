@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "./client";
 import {
   Lead,
@@ -11,7 +12,18 @@ import { toast } from "@/hooks/use-toast";
 
 // ─── Submit Lead (Public) ────────────────────────────────
 
+const LOCALES = ["EN", "FR", "ES", "AR"] as const;
+
+/** "fr-FR" / "fr" → "FR", anything unsupported → "EN". */
+export function toLocaleEnum(language: string): (typeof LOCALES)[number] {
+  const code = language.split("-")[0].toUpperCase();
+  return (LOCALES as readonly string[]).includes(code)
+    ? (code as (typeof LOCALES)[number])
+    : "EN";
+}
+
 export function useSubmitLead() {
+  const { i18n } = useTranslation();
   return useMutation({
     mutationFn: (data: LeadFormValues) => {
       const payload = {
@@ -34,6 +46,8 @@ export function useSubmitLead() {
           : [],
         verticalJumpCm:
           data.verticalJumpCm === 0 ? undefined : data.verticalJumpCm,
+        // Captured automatically from the site language the applicant used.
+        preferredLanguage: toLocaleEnum(i18n.language),
         // Drop empty guardian fields so the API sees them as absent, not "".
         guardianName: data.guardianName?.trim() || undefined,
         guardianEmail: data.guardianEmail?.trim() || undefined,

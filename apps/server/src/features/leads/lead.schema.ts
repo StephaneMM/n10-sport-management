@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LeadStatus, LeadSource } from '@prisma/client';
+import { LeadStatus, LeadSource, Locale } from '@prisma/client';
 
 /** Whole years between `dob` and `on`. */
 export function ageInYears(dob: Date, on: Date = new Date()): number {
@@ -40,6 +40,7 @@ const createLeadBody = z
 
     messageToUs: z.string().optional(),
     source: z.nativeEnum(LeadSource),
+    preferredLanguage: z.nativeEnum(Locale).optional(),
     consentToContact: z.literal(true, {
       errorMap: () => ({ message: "You must agree to be contacted" }),
     }),
@@ -85,6 +86,7 @@ export const listLeadsQuerySchema = z.object({
   gender: z.string().trim().min(1).optional(),
   status: z.nativeEnum(LeadStatus).optional(),
   source: z.nativeEnum(LeadSource).optional(),
+  preferredLanguage: z.nativeEnum(Locale).optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
   sortBy: z.enum(LEAD_SORT_FIELDS).default('createdAt'),

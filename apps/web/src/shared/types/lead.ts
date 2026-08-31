@@ -114,6 +114,7 @@ export interface Lead {
   messageToUs?: string;
   adminComment?: string;
   source?: string;
+  preferredLanguage?: string;
   consentToContact: boolean;
   guardianName?: string;
   guardianEmail?: string;

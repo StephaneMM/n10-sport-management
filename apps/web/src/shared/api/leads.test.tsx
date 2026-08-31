@@ -12,6 +12,10 @@ vi.mock("./client", async (importOriginal) => {
   return { ...actual, apiClient: vi.fn() };
 });
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ i18n: { language: "fr-FR" } }),
+}));
+
 import { apiClient } from "./client";
 
 const mockApiClient = vi.mocked(apiClient);
@@ -137,6 +141,7 @@ describe("useSubmitLead", () => {
       dateOfBirth: "2008-05-14",
       positions: ["Outside Hitter", "Opposite"],
       heightCm: 182,
+      preferredLanguage: "FR",
     });
   });
 });

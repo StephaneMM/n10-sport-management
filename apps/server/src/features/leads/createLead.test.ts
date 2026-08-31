@@ -85,6 +85,12 @@ describe('POST /api/leads', () => {
     expect(data.dateOfBirth).toEqual(new Date('2008-05-14'));
   });
 
+  it('stores an optional preferredLanguage', async () => {
+    await request(app).post('/api/leads').send({ ...validLead, preferredLanguage: 'FR' });
+    const { data } = mockedPrisma.lead.create.mock.calls[0][0];
+    expect(data.preferredLanguage).toBe('FR');
+  });
+
   it.each([
     ['an invalid email', { ...validLead, email: 'not-an-email' }],
     ['a missing first name', { ...validLead, firstName: '' }],
@@ -97,6 +103,7 @@ describe('POST /api/leads', () => {
     ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
     ['consent not given', { ...validLead, consentToContact: false }],
     ['missing consent', { ...validLead, consentToContact: undefined }],
+    ['an unknown preferredLanguage', { ...validLead, preferredLanguage: 'PT' }],
     ['a minor without guardian contact', { ...validLead, dateOfBirth: '2012-06-15' }],
     [
       'a minor missing the guardian email',
