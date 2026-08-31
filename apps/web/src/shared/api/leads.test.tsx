@@ -83,6 +83,7 @@ const validFormValues: LeadFormValues = {
   currentClub: "",
   highlightLinks: "",
   messageToUs: "",
+  source: "INSTAGRAM",
 };
 
 describe("leadFormSchema — date of birth", () => {
@@ -95,6 +96,10 @@ describe("leadFormSchema — date of birth", () => {
 
   it("accepts a real past DD/MM/YYYY date", () => {
     expect(leadFormSchema.safeParse(validFormValues).success).toBe(true);
+  });
+
+  it("requires a source", () => {
+    expect(leadFormSchema.safeParse({ ...validFormValues, source: "" }).success).toBe(false);
   });
 });
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LeadStatus } from '@prisma/client';
+import { LeadStatus, LeadSource } from '@prisma/client';
 
 export const createLeadSchema = z.object({
   body: z.object({
@@ -27,6 +27,7 @@ export const createLeadSchema = z.object({
     highlightLinks: z.array(z.string().url("Must be a valid URL")).optional().default([]),
     
     messageToUs: z.string().optional(),
+    source: z.nativeEnum(LeadSource),
   }),
 });
 
@@ -49,6 +50,7 @@ export const listLeadsQuerySchema = z.object({
   nationality: z.string().trim().min(1).optional(),
   gender: z.string().trim().min(1).optional(),
   status: z.nativeEnum(LeadStatus).optional(),
+  source: z.nativeEnum(LeadSource).optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
   sortBy: z.enum(LEAD_SORT_FIELDS).default('createdAt'),

@@ -53,6 +53,7 @@ export const leadFormSchema = z.object({
   highlightLinks: z.string().optional(),
   messageToUs: z.string().optional(),
   adminComment: z.string().optional(),
+  source: z.string().min(1, "Please tell us how you heard about us"),
 });
 
 export type LeadFormValues = z.infer<typeof leadFormSchema>;
@@ -79,6 +80,7 @@ export interface Lead {
   highlightLinks: string[];
   messageToUs?: string;
   adminComment?: string;
+  source?: string;
   createdAt: string;
   updatedAt: string;
 }

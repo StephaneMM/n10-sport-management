@@ -83,6 +83,8 @@
     "highlight_placeholder": "Comma-separated YouTube URLs (optional)",
     "message_to_us": "Message to Us",
     "message_placeholder": "Tell us about your goals and aspirations...",
+    "how_heard": "How did you hear about us?",
+    "select_source": "Select an option",
     "submitting": "Submitting...",
     "submit": "Submit Application",
     "thank_you_title": "Thank You!",

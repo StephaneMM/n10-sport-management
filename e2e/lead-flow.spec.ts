@@ -25,6 +25,9 @@ test('a prospect who fills the public form is visible to an admin', async ({ pag
   await page.getByLabel('Height (cm)').fill('180');
   await page.getByLabel('Weight (kg)').fill('75');
 
+  await page.getByRole('combobox').filter({ hasText: /select an option/i }).click();
+  await page.getByRole('option', { name: 'Instagram', exact: true }).click();
+
   await page.getByRole('button', { name: /submit application/i }).click();
   await expect(page.getByText(/thank you/i)).toBeVisible();
 

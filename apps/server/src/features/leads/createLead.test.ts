@@ -21,6 +21,7 @@ const validLead = {
   positions: ['Outside Hitter'],
   heightCm: 182,
   weightKg: 70,
+  source: 'INSTAGRAM',
 };
 
 describe('POST /api/leads', () => {
@@ -65,6 +66,8 @@ describe('POST /api/leads', () => {
     ['a non-URL highlight link', { ...validLead, highlightLinks: ['not a url'] }],
     ['a missing dateOfBirth', { ...validLead, dateOfBirth: undefined }],
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
+    ['a missing source', { ...validLead, source: undefined }],
+    ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
   ])('rejects %s with 400', async (_label, body) => {
     const response = await request(app).post('/api/leads').send(body);
 

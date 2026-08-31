@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 import { useSubmitLead } from "@/shared/api/leads";
-import { SPORTS, GENDERS } from "@/shared/constants";
+import { SPORTS, GENDERS, LEAD_SOURCES } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const ApplyPage = () => {
@@ -29,7 +29,7 @@ const ApplyPage = () => {
       country: "", dateOfBirth: "", nationality: "", gender: "", sport: "",
       positions: "", heightCm: undefined as unknown as number, weightKg: undefined as unknown as number,
       verticalJumpCm: "", league: "", currentClub: "",
-      highlightLinks: "", messageToUs: "",
+      highlightLinks: "", messageToUs: "", source: "",
     },
   });
 
@@ -174,6 +174,31 @@ const ApplyPage = () => {
                           className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30 min-h-[120px]"
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Section>
+
+              <Section title={t("apply.how_heard")}>
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-primary-foreground/80 font-body text-sm">{t("apply.how_heard")}</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-navy-light border-primary-foreground/10 text-primary-foreground">
+                            <SelectValue placeholder={t("apply.select_source")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {LEAD_SOURCES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

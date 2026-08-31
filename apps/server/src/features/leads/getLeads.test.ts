@@ -96,6 +96,13 @@ describe('GET /api/leads', () => {
     expect(where.status).toBe('QUALIFIED');
   });
 
+  it('filters by source', async () => {
+    await listLeads('?source=REFERRAL');
+
+    const { where } = mockedPrisma.lead.findMany.mock.calls[0][0];
+    expect(where.source).toBe('REFERRAL');
+  });
+
   it('honours sortBy / sortOrder', async () => {
     await listLeads('?sortBy=lastName&sortOrder=asc');
     expect(mockedPrisma.lead.findMany).toHaveBeenCalledWith(

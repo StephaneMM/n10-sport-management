@@ -31,6 +31,19 @@ enum LeadStatus {
   CONVERTED
 }
 
+enum LeadSource {
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  YOUTUBE
+  GOOGLE_SEARCH
+  REFERRAL
+  COACH
+  AGENT
+  EVENT
+  OTHER
+}
+
 enum DocumentType {
   GOVERNMENT_ID
   HS_TRANSCRIPT
@@ -90,6 +103,10 @@ model Lead {
   currentClub      String?
   highlightLinks   String[]
   
+  // Attribution — how the lead found us. Required on new submissions
+  // (createLeadSchema); nullable only for rows that predate the field.
+  source           LeadSource?
+
   // Messages & Admin Notes
   messageToUs      String?  // Not mandatory
   adminComment     String?  // Admin adds this later
