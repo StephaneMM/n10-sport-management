@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Role } from '@prisma/client';
 import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
+import { HttpError } from '../lib/httpError';
 
 /** Shape attached to `res.locals.user` for every authenticated request. */
 export interface AuthenticatedUser {
@@ -25,8 +26,7 @@ export const requireUser = async (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Unauthorized: No token provided' });
-    return;
+    throw new HttpError(401, 'Unauthorized: No token provided');
   }
 
   // 2. Extract just the token (removing the word "Bearer ")
@@ -37,35 +37,29 @@ export const requireUser = async (
   try {
     payload = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
   } catch {
-    res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
-    return;
+    throw new HttpError(401, 'Unauthorized: Invalid or expired token');
   }
 
   // 4. A valid token is not enough. It lives for 7 days, during which the
   // account may have been deleted or had its role changed. Re-load the user on
   // every request and trust the database — never the token — for identity and
-  // role.
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, email: true, role: true },
-    });
+  // role. A database failure here rejects the promise and Express routes it to
+  // the errorHandler as a 500.
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: { id: true, email: true, role: true },
+  });
 
-    if (!user) {
-      res.status(401).json({ error: 'Unauthorized: Account no longer exists' });
-      return;
-    }
-
-    const authenticatedUser: AuthenticatedUser = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    };
-    res.locals.user = authenticatedUser;
-
-    next();
-  } catch (error) {
-    console.error('requireUser error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!user) {
+    throw new HttpError(401, 'Unauthorized: Account no longer exists');
   }
+
+  const authenticatedUser: AuthenticatedUser = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  };
+  res.locals.user = authenticatedUser;
+
+  next();
 };

@@ -1,38 +1,36 @@
 import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod'; // Import everything under 'z'
+import { z } from 'zod';
 
-// We use z.ZodSchema which covers ALL possible Zod schemas perfectly
-export const validateResource = (schema: z.ZodSchema) => 
-  (req: Request, res: Response, next: NextFunction): void => {
-  try {
-        // 1. Capture the validated, coerced data from Zod!
-        const parsedData = schema.parse({
-          body: req.body,
-          query: req.query,
-          params: req.params,
-        }) as { body: unknown };
+/**
+ * Validates and coerces `req.body` against a Zod schema before the route
+ * handler runs. A validation failure is handed to `next()` as a `ZodError`,
+ * which the terminal errorHandler turns into a 400 with the issue list.
+ *
+ * This middleware applies the rules from a feature's `*.schema.ts` to the
+ * incoming request.
+ */
+export const validateResource =
+  (schema: z.ZodSchema) =>
+  (req: Request, _res: Response, next: NextFunction): void => {
+    try {
+      // Capture the validated, coerced data from Zod.
+      const parsedData = schema.parse({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      }) as { body: unknown };
 
-        // 2. Overwrite the raw request with the clean Zod data
-        // that way the coerced types (like dates) are available in the route handler without any extra work!
-        req.body = parsedData.body;
+      // Overwrite the raw body with the clean Zod data, so coerced types (like
+      // dates) are available in the handler with no extra work.
+      //
+      // Note: we intentionally do NOT overwrite req.query / req.params. Node
+      // generates them from the URL string and Express exposes them as
+      // getter-only — assigning throws "Cannot set property query ... which has
+      // only a getter". We only validate the body downstream anyway.
+      req.body = parsedData.body;
 
-        // Note: We intentionally do NOT overwrite req.query and req.params. They are generated directly from the actual URL string by Node.js. Express locks them down as "read-only"
-        // req.query = parsedData.query; AND req.params = parsedData.params; TRIGGERS {"error":"Cannot set property query of #<IncomingMessage> which has only a getter"}
-        // We only use req.body for validation, so we can skip overwriting req.query and req.params for now. 
-        
       next();
     } catch (e) {
-      // Safely check if it's a ZodError using the 'z' object
-      if (e instanceof z.ZodError) {
-        // e.issues is the standard way to extract validation failures in modern Zod
-        res.status(400).json({ errors: e.issues });
-        return;
-      }
-
-      // Fallback for non-Zod errors
-      res.status(400).json({ error: e instanceof Error ? e.message : 'Invalid request payload' });
-      return;
+      next(e);
     }
   };
-
-  // this middleware applies the rules created in the Zod schema from auth.schema.ts to the incoming request, validating the body, query, and params before it reaches the route handler.
