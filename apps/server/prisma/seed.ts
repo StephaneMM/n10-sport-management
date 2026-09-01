@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import bcrypt from 'bcrypt';
 import { PrismaClient, Role } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { hashPassword } from '../src/lib/password';
 
 /**
  * Idempotent database seed.
@@ -30,7 +30,7 @@ if (!adminEmail || !adminPassword) {
 const prisma = new PrismaClient({ adapter: new PrismaPg(new Pool({ connectionString })) });
 
 async function seedAdmin(email: string, plainPassword: string): Promise<void> {
-  const passwordHash = await bcrypt.hash(plainPassword, 10);
+  const passwordHash = await hashPassword(plainPassword);
 
   const admin = await prisma.user.upsert({
     where: { email },

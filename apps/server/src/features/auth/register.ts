@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import { ValidatedRequest } from '../../types/express';
-import bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { HttpError } from '../../lib/httpError';
+import { hashPassword } from '../../lib/password';
 import { RegisterInput } from './auth.schema';
 
 export const registerHandler = async (
@@ -17,8 +17,7 @@ export const registerHandler = async (
     throw new HttpError(409, 'Email already in use');
   }
 
-  const saltRounds = 10;
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const hashedPassword = await hashPassword(password);
 
   const newUser = await prisma.user.create({
     data: {

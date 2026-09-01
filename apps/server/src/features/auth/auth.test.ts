@@ -9,12 +9,13 @@ jest.mock('../../lib/prisma', () => ({
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
   },
 }));
 
 const mockedPrisma = prisma as unknown as {
-  user: { findUnique: jest.Mock; create: jest.Mock };
+  user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
 };
 
 const VALID_PASSWORD = 'Passw0rd!';
@@ -136,19 +137,48 @@ describe('POST /api/auth/register', () => {
 });
 
 describe('POST /api/auth/login', () => {
-  let passwordHash: string;
+  let legacyHash: string;
 
   beforeAll(async () => {
-    passwordHash = await bcrypt.hash(VALID_PASSWORD, 10);
+    legacyHash = await bcrypt.hash(VALID_PASSWORD, 10);
   });
 
   beforeEach(() => {
     mockedPrisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       email: 'member@n10.test',
-      password: passwordHash,
+      password: legacyHash,
       role: 'ADMIN',
     });
+    mockedPrisma.user.update.mockResolvedValue({});
+  });
+
+  it('transparently upgrades a legacy (cost-10) password hash on login', async () => {
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'member@n10.test', password: VALID_PASSWORD });
+
+    expect(mockedPrisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'user-1' },
+        data: { password: expect.stringMatching(/^\$2[aby]\$12\$/) },
+      }),
+    );
+  });
+
+  it('does not re-hash a current-cost password', async () => {
+    mockedPrisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      email: 'member@n10.test',
+      password: await bcrypt.hash(VALID_PASSWORD, 12),
+      role: 'ADMIN',
+    });
+
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'member@n10.test', password: VALID_PASSWORD });
+
+    expect(mockedPrisma.user.update).not.toHaveBeenCalled();
   });
 
   it('returns a JWT and only the safe user fields on valid credentials', async () => {
