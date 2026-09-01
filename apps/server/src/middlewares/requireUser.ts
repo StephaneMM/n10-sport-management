@@ -1,19 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { Role } from '@prisma/client';
-import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
 import { HttpError } from '../lib/httpError';
+import { verifyToken } from '../lib/jwt';
 
 /** Shape attached to `res.locals.user` for every authenticated request. */
 export interface AuthenticatedUser {
   userId: string;
   email: string;
-  role: Role;
-}
-
-interface TokenPayload {
-  userId: string;
   role: Role;
 }
 
@@ -32,10 +26,11 @@ export const requireUser = async (
   // 2. Extract just the token (removing the word "Bearer ")
   const token = authHeader.split(' ')[1];
 
-  // 3. The math check: did WE sign this token, and is it still unexpired?
-  let payload: TokenPayload;
+  // 3. The math check: did WE sign this token (right algorithm + issuer) and is
+  // it still unexpired?
+  let payload: { userId: string; role: Role };
   try {
-    payload = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+    payload = verifyToken(token);
   } catch {
     throw new HttpError(401, 'Unauthorized: Invalid or expired token');
   }

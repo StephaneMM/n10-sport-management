@@ -1,10 +1,9 @@
 import { Response } from 'express';
 import { ValidatedRequest } from '../../types/express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma';
-import { env } from '../../config/env';
 import { HttpError } from '../../lib/httpError';
+import { signToken } from '../../lib/jwt';
 import { LoginInput } from './auth.schema';
 
 // A valid bcrypt hash of a throwaway string. When the email is unknown we still
@@ -28,13 +27,9 @@ export const loginHandler = async (
     throw new HttpError(401, 'Invalid email and/or password');
   }
 
-  // Mint the token. Short-lived (1 day) to bound the damage of a leaked token —
-  // there is no revocation list yet. A refresh-token flow is the longer-term fix.
-  const token = jwt.sign(
-    { userId: user.id, role: user.role },
-    env.JWT_SECRET,
-    { expiresIn: '1d' },
-  );
+  // Short-lived (1 day) to bound the damage of a leaked token — there is no
+  // revocation list yet. A refresh-token flow is the longer-term fix.
+  const token = signToken({ userId: user.id, role: user.role });
 
   // Welcome back!
   res.status(200).json({

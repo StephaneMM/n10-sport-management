@@ -1,7 +1,7 @@
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
+import { signToken } from '../../lib/jwt';
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
@@ -15,8 +15,8 @@ const mockedPrisma = prisma as unknown as {
   lead: { findMany: jest.Mock; count: jest.Mock };
 };
 
-const adminToken = jwt.sign({ userId: 'admin-1', role: 'ADMIN' }, process.env.JWT_SECRET as string);
-const prospectToken = jwt.sign({ userId: 'p-1', role: 'PROSPECT' }, process.env.JWT_SECRET as string);
+const adminToken = signToken({ userId: 'admin-1', role: 'ADMIN' });
+const prospectToken = signToken({ userId: 'p-1', role: 'PROSPECT' });
 
 function listLeads(query = '', token = adminToken) {
   return request(app).get(`/api/leads${query}`).set('Authorization', `Bearer ${token}`);

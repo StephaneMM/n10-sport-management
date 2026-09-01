@@ -1,8 +1,8 @@
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import { Prisma } from '@prisma/client';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
+import { signToken } from '../../lib/jwt';
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
@@ -16,9 +16,8 @@ const mockedPrisma = prisma as unknown as {
   lead: { findUnique: jest.Mock; update: jest.Mock };
 };
 
-const secret = process.env.JWT_SECRET as string;
-const adminToken = jwt.sign({ userId: 'admin-1', role: 'ADMIN' }, secret);
-const prospectToken = jwt.sign({ userId: 'p-1', role: 'PROSPECT' }, secret);
+const adminToken = signToken({ userId: 'admin-1', role: 'ADMIN' });
+const prospectToken = signToken({ userId: 'p-1', role: 'PROSPECT' });
 const LEAD_ID = '11111111-1111-1111-1111-111111111111';
 
 beforeEach(() => {
