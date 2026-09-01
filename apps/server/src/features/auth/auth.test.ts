@@ -1,5 +1,6 @@
 import request from 'supertest';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
 
@@ -91,6 +92,7 @@ describe('POST /api/auth/register', () => {
     ['no uppercase', 'passw0rd!'],
     ['no number', 'Password!'],
     ['no special character', 'Passw0rd1'],
+    ['over the 72-byte bcrypt limit', `A1!${'a'.repeat(80)}`],
   ])('rejects a weak password (%s)', async (_label, password) => {
     const response = await request(app)
       .post('/api/auth/register')
@@ -158,6 +160,9 @@ describe('POST /api/auth/login', () => {
     expect(typeof response.body.token).toBe('string');
     expect(response.body.user).toEqual({ id: 'user-1', email: 'member@n10.test', role: 'ADMIN' });
     expect(response.body.user).not.toHaveProperty('password');
+
+    const decoded = jwt.decode(response.body.token) as { iat: number; exp: number };
+    expect(decoded.exp - decoded.iat).toBe(24 * 60 * 60); // 1 day
   });
 
   it('still runs bcrypt for an unknown email (no timing oracle)', async () => {

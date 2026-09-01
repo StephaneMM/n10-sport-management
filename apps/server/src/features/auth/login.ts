@@ -28,11 +28,12 @@ export const loginHandler = async (
     throw new HttpError(401, 'Invalid email and/or password');
   }
 
-  // Mint the VIP Pass (JWT)
+  // Mint the token. Short-lived (1 day) to bound the damage of a leaked token —
+  // there is no revocation list yet. A refresh-token flow is the longer-term fix.
   const token = jwt.sign(
-    { userId: user.id, role: user.role }, // The data hidden inside the token
-    env.JWT_SECRET,                        // The signature proving WE made it
-    { expiresIn: '7d' }                   // The pass expires in 7 days
+    { userId: user.id, role: user.role },
+    env.JWT_SECRET,
+    { expiresIn: '1d' },
   );
 
   // Welcome back!
