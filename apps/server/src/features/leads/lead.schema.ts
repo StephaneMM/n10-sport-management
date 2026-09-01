@@ -13,42 +13,52 @@ export function ageInYears(dob: Date, on: Date = new Date()): number {
 
 export const MINOR_AGE = 18;
 
+const shortText = (label: string, max = 120) =>
+  z.string().min(1, `${label} is required`).max(max, `${label} is too long`);
+
 const createLeadBody = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    email: z.string().trim().toLowerCase().email("Invalid email address"),
-    phone: z.string().min(1, "Phone number is required"),
-    country: z.string().min(1, "Country is required"),
+    firstName: shortText("First name", 100),
+    lastName: shortText("Last name", 100),
+    email: z.string().trim().toLowerCase().email("Invalid email address").max(254),
+    phone: shortText("Phone number", 32),
+    country: shortText("Country", 100),
 
     dateOfBirth: z.coerce
       .date()
       .min(new Date('1940-01-01'), "Date of birth is not valid")
       .max(new Date(), "Date of birth must be in the past"),
-    nationality: z.string().min(1, "Nationality is required"),
-    gender: z.string().min(1, "Gender is required"),
-    sport: z.string().min(1, "Sport is required"),
-    positions: z.array(z.string()).min(1, "At least one position is required"),
+    nationality: shortText("Nationality", 100),
+    gender: shortText("Gender", 32),
+    sport: shortText("Sport", 64),
+    positions: z
+      .array(z.string().min(1).max(60))
+      .min(1, "At least one position is required")
+      .max(20, "Too many positions"),
 
-    heightCm: z.number().positive("Height must be positive"),
-    weightKg: z.number().positive("Weight must be positive"),
-    verticalJumpCm: z.number().positive().optional(),
+    heightCm: z.number().positive("Height must be positive").max(300),
+    weightKg: z.number().positive("Weight must be positive").max(500),
+    verticalJumpCm: z.number().positive().max(200).optional(),
 
-    league: z.string().optional(),
-    currentClub: z.string().optional(),
-    highlightLinks: z.array(z.string().url("Must be a valid URL")).optional().default([]),
+    league: z.string().max(120).optional(),
+    currentClub: z.string().max(120).optional(),
+    highlightLinks: z
+      .array(z.string().url("Must be a valid URL").max(500))
+      .max(10, "Too many links")
+      .optional()
+      .default([]),
 
-    messageToUs: z.string().optional(),
+    messageToUs: z.string().max(2000, "Message is too long").optional(),
     source: z.nativeEnum(LeadSource),
     preferredLanguage: z.nativeEnum(Locale).optional(),
     consentToContact: z.literal(true, {
       errorMap: () => ({ message: "You must agree to be contacted" }),
     }),
 
-    guardianName: z.string().trim().min(1).optional(),
-    guardianEmail: z.string().trim().toLowerCase().email("Invalid guardian email").optional(),
-    guardianPhone: z.string().trim().min(1).optional(),
-    guardianRelationship: z.string().trim().min(1).optional(),
+    guardianName: z.string().trim().min(1).max(100).optional(),
+    guardianEmail: z.string().trim().toLowerCase().email("Invalid guardian email").max(254).optional(),
+    guardianPhone: z.string().trim().min(1).max(32).optional(),
+    guardianRelationship: z.string().trim().min(1).max(60).optional(),
     // NOTE: the request also carries `turnstileToken`, consumed by the
     // verifyTurnstile middleware before this schema runs and stripped here.
   })

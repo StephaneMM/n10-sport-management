@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Email is stored and compared case-insensitively: trim surrounding whitespace
 // and lowercase before it ever reaches the database or a `findUnique`.
-const email = z.string().trim().toLowerCase().email("Invalid email address");
+const email = z.string().trim().toLowerCase().email("Invalid email address").max(254);
 
 export const registerSchema = z.object({
   body: z

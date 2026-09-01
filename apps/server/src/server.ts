@@ -19,7 +19,9 @@ app.use(helmet());
 // Allowed browser origins come from CORS_ORIGINS (see config/env).
 app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
 
-app.use(express.json());
+// Every endpoint takes small JSON payloads; cap the body so a client can't
+// stream megabytes at us.
+app.use(express.json({ limit: '16kb' }));
 
 // Health check route
 app.get('/health', (req, res) => {

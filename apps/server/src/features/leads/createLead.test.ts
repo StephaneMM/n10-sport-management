@@ -85,6 +85,15 @@ describe('POST /api/leads', () => {
     expect(data.dateOfBirth).toEqual(new Date('2008-05-14'));
   });
 
+  it('rejects a body larger than the JSON limit before parsing it', async () => {
+    const response = await request(app)
+      .post('/api/leads')
+      .send({ ...validLead, messageToUs: 'x'.repeat(20_000) });
+
+    expect(response.status).toBe(413);
+    expect(mockedPrisma.lead.create).not.toHaveBeenCalled();
+  });
+
   it('stores an optional preferredLanguage', async () => {
     await request(app).post('/api/leads').send({ ...validLead, preferredLanguage: 'FR' });
     const { data } = mockedPrisma.lead.create.mock.calls[0][0];
@@ -101,6 +110,9 @@ describe('POST /api/leads', () => {
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
     ['a missing source', { ...validLead, source: undefined }],
     ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
+    ['an over-long first name', { ...validLead, firstName: 'a'.repeat(101) }],
+    ['too many positions', { ...validLead, positions: Array.from({ length: 21 }, () => 'X') }],
+    ['an over-long message', { ...validLead, messageToUs: 'x'.repeat(2001) }],
     ['consent not given', { ...validLead, consentToContact: false }],
     ['missing consent', { ...validLead, consentToContact: undefined }],
     ['an unknown preferredLanguage', { ...validLead, preferredLanguage: 'PT' }],
