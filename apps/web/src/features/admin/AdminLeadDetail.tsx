@@ -16,6 +16,7 @@ import {
 
 import { useLead, useUpdateLead } from "@/shared/api/leads";
 import { ageInYears } from "@/shared/types/lead";
+import { safeExternalUrl } from "@/shared/url";
 import { toast } from "@/hooks/use-toast";
 import { ApiError } from "@/shared/api/client";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/shared/constants";
@@ -195,13 +196,20 @@ const AdminLeadDetail = () => {
           {lead.highlightLinks.length > 0 && (
             <DetailSection title={t("admin.highlight_links")}>
               <ul className="space-y-2">
-                {lead.highlightLinks.map((link, i) => (
-                  <li key={i}>
-                    <a href={link} target="_blank" rel="noopener noreferrer" className="font-body text-sm text-gold hover:text-gold-light underline break-all">
-                      {link}
-                    </a>
-                  </li>
-                ))}
+                {lead.highlightLinks.map((link, i) => {
+                  const href = safeExternalUrl(link);
+                  return (
+                    <li key={i} className="font-body text-sm break-all">
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-light underline">
+                          {link}
+                        </a>
+                      ) : (
+                        <span className="text-primary-foreground/50">{link}</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </DetailSection>
           )}

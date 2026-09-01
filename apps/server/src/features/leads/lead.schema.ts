@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LeadStatus, LeadSource, Locale } from '@prisma/client';
+import { httpUrl } from '../../lib/urlSchema';
 
 /** Whole years between `dob` and `on`. */
 export function ageInYears(dob: Date, on: Date = new Date()): number {
@@ -42,11 +43,7 @@ const createLeadBody = z
 
     league: z.string().max(120).optional(),
     currentClub: z.string().max(120).optional(),
-    highlightLinks: z
-      .array(z.string().url("Must be a valid URL").max(500))
-      .max(10, "Too many links")
-      .optional()
-      .default([]),
+    highlightLinks: z.array(httpUrl).max(10, "Too many links").optional().default([]),
 
     messageToUs: z.string().max(2000, "Message is too long").optional(),
     source: z.nativeEnum(LeadSource),

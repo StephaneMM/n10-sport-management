@@ -106,6 +106,7 @@ describe('POST /api/leads', () => {
     ['a non-positive height', { ...validLead, heightCm: -5 }],
     ['no positions', { ...validLead, positions: [] }],
     ['a non-URL highlight link', { ...validLead, highlightLinks: ['not a url'] }],
+    ['a javascript: highlight link', { ...validLead, highlightLinks: ['javascript:alert(document.cookie)'] }],
     ['a missing dateOfBirth', { ...validLead, dateOfBirth: undefined }],
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
     ['a missing source', { ...validLead, source: undefined }],
