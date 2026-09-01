@@ -160,6 +160,18 @@ describe('POST /api/auth/login', () => {
     expect(response.body.user).not.toHaveProperty('password');
   });
 
+  it('still runs bcrypt for an unknown email (no timing oracle)', async () => {
+    mockedPrisma.user.findUnique.mockResolvedValue(null);
+    const compareSpy = jest.spyOn(bcrypt, 'compare');
+
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'ghost@n10.test', password: VALID_PASSWORD });
+
+    expect(compareSpy).toHaveBeenCalled();
+    compareSpy.mockRestore();
+  });
+
   it('returns a generic 401 when the email is unknown', async () => {
     mockedPrisma.user.findUnique.mockResolvedValue(null);
 
