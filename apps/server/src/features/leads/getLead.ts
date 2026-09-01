@@ -7,12 +7,7 @@ export const getLeadHandler = async (
   req: Request<GetLeadInput>,
   res: Response
 ): Promise<void> => {
-  // 1. The Admin Bouncer
-  if (res.locals.user.role !== 'ADMIN') {
-    throw new HttpError(403, 'Forbidden: You must be an admin to view lead details.');
-  }
-
-  // 2. Fetch the specific lead
+  // Admin-only — enforced by requireAdmin on the route.
   const { id } = req.params;
   const lead = await prisma.lead.findUnique({
     where: { id },

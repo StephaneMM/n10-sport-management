@@ -1,18 +1,13 @@
 import { Response } from 'express';
 import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
-import { HttpError } from '../../lib/httpError';
 import { UpdateLeadParams, UpdateLeadBody } from './lead.schema';
 
 export const updateLeadHandler = async (
   req: ValidatedRequest<UpdateLeadBody, UpdateLeadParams>,
   res: Response
 ): Promise<void> => {
-  // 1. The Admin Bouncer
-  if (res.locals.user.role !== 'ADMIN') {
-    throw new HttpError(403, 'Forbidden: You must be an admin to update leads.');
-  }
-
+  // Admin-only — enforced by requireAdmin on the route.
   const { id } = req.params;
   const { adminComment, status } = req.body;
 

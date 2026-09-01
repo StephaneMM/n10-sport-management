@@ -4,6 +4,7 @@ import { createLeadSchema } from './lead.schema';
 import { createLeadHandler } from './createLead';
 import { getLeadsHandler } from './getLeads';
 import { requireUser } from '../../middlewares/requireUser';
+import { requireAdmin } from '../../middlewares/requireAdmin';
 import { publicLeadLimiter } from '../../middlewares/rateLimit';
 import { verifyTurnstile } from '../../middlewares/verifyTurnstile';
 import { getLeadSchema } from './lead.schema';
@@ -23,24 +24,17 @@ leadRouter.post(
 );
 
 
-// ADMIN ROUTE - checks for 'ADMIN' in getLeadsHandler and JWT with requireUser
-// TODO: create an requireAdmin bouncer middleware instead of doing it in the handler
-leadRouter.get('/', requireUser, getLeadsHandler);
+// ADMIN ROUTES — JWT, then role gate, then (where relevant) validation.
+leadRouter.get('/', requireUser, requireAdmin, getLeadsHandler);
 
-// ADMIN ROUTE - Get a single lead by ID
-leadRouter.get(
-  '/:id', 
-  requireUser, 
-  validateResource(getLeadSchema), 
-  getLeadHandler
-);
+leadRouter.get('/:id', requireUser, requireAdmin, validateResource(getLeadSchema), getLeadHandler);
 
-// ADMIN ROUTE - Update a lead (e.g., add admin comments)
 leadRouter.patch(
-  '/:id', 
-  requireUser, 
-  validateResource(updateLeadSchema), 
-  updateLeadHandler
+  '/:id',
+  requireUser,
+  requireAdmin,
+  validateResource(updateLeadSchema),
+  updateLeadHandler,
 );
 
 export { leadRouter };
