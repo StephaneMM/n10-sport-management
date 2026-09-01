@@ -117,7 +117,13 @@ describe('GET /api/leads', () => {
     );
   });
 
-  it.each(['?page=0', '?pageSize=500', '?sortBy=email', '?sortOrder=sideways'])(
+  it.each([
+    '?page=0',
+    '?pageSize=500',
+    '?sortBy=email',
+    '?sortOrder=sideways',
+    `?search=${'x'.repeat(101)}`,
+  ])(
     'rejects invalid query %s with 400',
     async (query) => {
       const response = await listLeads(query);

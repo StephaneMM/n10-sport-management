@@ -89,10 +89,12 @@ export const LEAD_SORT_FIELDS = ['createdAt', 'lastName', 'firstName', 'sport', 
 export const listLeadsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
-  search: z.string().trim().min(1).optional(),
-  sport: z.string().trim().min(1).optional(),
-  nationality: z.string().trim().min(1).optional(),
-  gender: z.string().trim().min(1).optional(),
+  // Capped: these become Postgres `ILIKE` / equality patterns, and the JSON
+  // body limit does not apply to the query string.
+  search: z.string().trim().min(1).max(100).optional(),
+  sport: z.string().trim().min(1).max(64).optional(),
+  nationality: z.string().trim().min(1).max(100).optional(),
+  gender: z.string().trim().min(1).max(32).optional(),
   status: z.nativeEnum(LeadStatus).optional(),
   source: z.nativeEnum(LeadSource).optional(),
   preferredLanguage: z.nativeEnum(Locale).optional(),
