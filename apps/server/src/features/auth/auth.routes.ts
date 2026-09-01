@@ -5,10 +5,15 @@ import { validateResource } from '../../middlewares/validateRessource';
 import { requireUser } from '../../middlewares/requireUser';
 import { authLimiter } from '../../middlewares/rateLimit';
 import { registerSchema, loginSchema } from './auth.schema';
+import { env } from '../../config/env';
 
 const authRouter = Router();
 
-authRouter.post('/register', authLimiter, validateResource(registerSchema), registerHandler);
+// Only mounted when explicitly enabled — see ENABLE_PUBLIC_REGISTRATION in
+// config/env. Otherwise POST /api/auth/register simply 404s.
+if (env.ENABLE_PUBLIC_REGISTRATION) {
+  authRouter.post('/register', authLimiter, validateResource(registerSchema), registerHandler);
+}
 
 authRouter.post('/login', authLimiter, validateResource(loginSchema), loginHandler);
 

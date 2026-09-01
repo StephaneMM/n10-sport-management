@@ -44,6 +44,15 @@ const envSchema = z.object({
       return raw.split(',').map((origin) => origin.trim()).filter(Boolean);
     }),
 
+  // Public POST /api/auth/register. Off by default: it only creates PROSPECT
+  // accounts, and until there is a prospect portal the endpoint is pure attack
+  // surface (account spam, email enumeration). Set to the string "true" to mount
+  // it when the portal ships.
+  ENABLE_PUBLIC_REGISTRATION: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true'),
+
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z
     .string()
