@@ -49,6 +49,8 @@ const createLeadBody = z
     guardianEmail: z.string().trim().toLowerCase().email("Invalid guardian email").optional(),
     guardianPhone: z.string().trim().min(1).optional(),
     guardianRelationship: z.string().trim().min(1).optional(),
+    // NOTE: the request also carries `turnstileToken`, consumed by the
+    // verifyTurnstile middleware before this schema runs and stripped here.
   })
   .superRefine((data, ctx) => {
     if (ageInYears(data.dateOfBirth) >= MINOR_AGE) return;

@@ -52,6 +52,10 @@ const envSchema = z.object({
       (value) => !FORBIDDEN_JWT_SECRETS.has(value),
       'JWT_SECRET is a known placeholder value — generate a real secret (e.g. `openssl rand -base64 48`)',
     ),
+
+  // Cloudflare Turnstile secret. When set, the public lead form must send a
+  // valid Turnstile token. Unset (local dev, tests) disables the check.
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
