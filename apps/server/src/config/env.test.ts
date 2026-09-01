@@ -70,4 +70,12 @@ describe('parseEnv', () => {
   it('rejects an invalid NODE_ENV', () => {
     expect(() => parseEnv({ ...validSource, NODE_ENV: 'staging' })).toThrow(/NODE_ENV/);
   });
+
+  it('requires CORS_ORIGINS in production', () => {
+    expect(() => parseEnv({ ...validSource, NODE_ENV: 'production' })).toThrow(/CORS_ORIGINS/);
+    expect(
+      parseEnv({ ...validSource, NODE_ENV: 'production', CORS_ORIGINS: 'https://n10.app' })
+        .CORS_ORIGINS,
+    ).toEqual(['https://n10.app']);
+  });
 });

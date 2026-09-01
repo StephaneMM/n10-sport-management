@@ -10,10 +10,10 @@ jest.mock('../../lib/prisma', () => ({
 // publicLeadLimiter (15/hour) would start returning 429. Rate limiting has its
 // own coverage in rateLimit.test.ts.
 type Next = () => void;
-jest.mock('../../middlewares/rateLimit', () => ({
-  publicLeadLimiter: (_req: unknown, _res: unknown, next: Next) => next(),
-  authLimiter: (_req: unknown, _res: unknown, next: Next) => next(),
-}));
+jest.mock('../../middlewares/rateLimit', () => {
+  const passthrough = (_req: unknown, _res: unknown, next: Next) => next();
+  return { publicLeadLimiter: passthrough, authLimiter: passthrough, apiLimiter: passthrough };
+});
 
 const mockedPrisma = prisma as unknown as { lead: { create: jest.Mock } };
 

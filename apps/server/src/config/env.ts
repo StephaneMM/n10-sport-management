@@ -84,6 +84,15 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     throw new Error(`Invalid environment configuration:\n${details}`);
   }
 
+  // The CORS_ORIGINS transform falls back to localhost when unset — fine for
+  // dev, but in production that would let a page on localhost make credentialed
+  // calls. Require an explicit allowlist there.
+  if (result.data.NODE_ENV === 'production' && !source.CORS_ORIGINS?.trim()) {
+    throw new Error(
+      'Invalid environment configuration:\n  - CORS_ORIGINS: required in production',
+    );
+  }
+
   return result.data;
 }
 

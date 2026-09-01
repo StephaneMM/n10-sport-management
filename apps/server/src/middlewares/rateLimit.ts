@@ -43,3 +43,14 @@ export const publicLeadLimiter = createRateLimiter({
   limit: 15,
   message: { error: 'Too many submissions from this network. Please try again later.' },
 });
+
+/**
+ * Coarse ceiling on all of /api, so an authenticated caller (or a stolen token)
+ * can't hammer the read endpoints without limit. Generous enough that normal
+ * use never hits it; the stricter limiters above still guard the sensitive
+ * routes.
+ */
+export const apiLimiter = createRateLimiter({
+  windowMs: 15 * MINUTE,
+  limit: 300,
+});

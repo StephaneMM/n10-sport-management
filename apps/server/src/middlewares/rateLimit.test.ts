@@ -99,3 +99,13 @@ describe('publicLeadLimiter on POST /api/leads', () => {
     expect(statuses).toContain(429);
   });
 });
+
+describe('apiLimiter', () => {
+  it('is mounted on /api (RateLimit header present) but not on /health', async () => {
+    const apiResponse = await request(app).get('/api/auth/me'); // 401, but limiter ran
+    expect(apiResponse.headers).toHaveProperty('ratelimit');
+
+    const healthResponse = await request(app).get('/health');
+    expect(healthResponse.headers.ratelimit).toBeUndefined();
+  });
+});
