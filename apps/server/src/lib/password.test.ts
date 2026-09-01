@@ -10,7 +10,7 @@ describe('password', () => {
   });
 
   it('flags a weaker hash for rehash and leaves a current one alone', async () => {
-    expect(needsRehash(await bcrypt.hash('x', 10))).toBe(true);
+    expect(needsRehash(await bcrypt.hash('x', BCRYPT_COST - 2))).toBe(true);
     expect(needsRehash(await bcrypt.hash('x', BCRYPT_COST))).toBe(false);
   });
 

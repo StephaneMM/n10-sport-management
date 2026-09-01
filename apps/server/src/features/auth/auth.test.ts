@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
+import { BCRYPT_COST } from '../../lib/password';
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
@@ -29,7 +30,7 @@ async function loginAndGetToken(role = 'ADMIN'): Promise<string> {
   mockedPrisma.user.findUnique.mockResolvedValueOnce({
     id: 'user-1',
     email: 'member@n10.test',
-    password: await bcrypt.hash(VALID_PASSWORD, 10),
+    password: await bcrypt.hash(VALID_PASSWORD, BCRYPT_COST - 2),
     role,
   });
   const response = await request(app)
@@ -140,7 +141,7 @@ describe('POST /api/auth/login', () => {
   let legacyHash: string;
 
   beforeAll(async () => {
-    legacyHash = await bcrypt.hash(VALID_PASSWORD, 10);
+    legacyHash = await bcrypt.hash(VALID_PASSWORD, BCRYPT_COST - 2);
   });
 
   beforeEach(() => {
@@ -153,7 +154,9 @@ describe('POST /api/auth/login', () => {
     mockedPrisma.user.update.mockResolvedValue({});
   });
 
-  it('transparently upgrades a legacy (cost-10) password hash on login', async () => {
+  const costMarker = new RegExp(`^\\$2[aby]\\$${String(BCRYPT_COST).padStart(2, '0')}\\$`);
+
+  it('transparently upgrades a lower-cost password hash on login', async () => {
     await request(app)
       .post('/api/auth/login')
       .send({ email: 'member@n10.test', password: VALID_PASSWORD });
@@ -161,7 +164,7 @@ describe('POST /api/auth/login', () => {
     expect(mockedPrisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'user-1' },
-        data: { password: expect.stringMatching(/^\$2[aby]\$12\$/) },
+        data: { password: expect.stringMatching(costMarker) },
       }),
     );
   });
@@ -170,7 +173,7 @@ describe('POST /api/auth/login', () => {
     mockedPrisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       email: 'member@n10.test',
-      password: await bcrypt.hash(VALID_PASSWORD, 12),
+      password: await bcrypt.hash(VALID_PASSWORD, BCRYPT_COST),
       role: 'ADMIN',
     });
 

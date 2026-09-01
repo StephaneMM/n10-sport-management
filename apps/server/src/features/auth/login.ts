@@ -1,15 +1,21 @@
 import { Response } from 'express';
+import bcrypt from 'bcrypt';
 import { ValidatedRequest } from '../../types/express';
 import { prisma } from '../../lib/prisma';
 import { HttpError } from '../../lib/httpError';
 import { signToken } from '../../lib/jwt';
-import { hashPassword, needsRehash, verifyPassword } from '../../lib/password';
+import { BCRYPT_COST, hashPassword, needsRehash, verifyPassword } from '../../lib/password';
 import { LoginInput } from './auth.schema';
 
 // A valid bcrypt hash of a throwaway string, at the current cost. When the email
 // is unknown we still run the comparison against this, so a failed login takes
-// the same time whether or not the account exists — no timing enumeration.
-const DECOY_HASH = '$2b$12$aiwyZwG63/ZIOpiC82ZvxeU0TGo3Sf2JfhPopx./RMNyncwxWyv32';
+// the same time whether or not the account exists — no timing enumeration. The
+// precomputed cost-12 value avoids a startup hash in production; the test cost
+// is cheap, so compute it there.
+const DECOY_HASH =
+  BCRYPT_COST >= 12
+    ? '$2b$12$aiwyZwG63/ZIOpiC82ZvxeU0TGo3Sf2JfhPopx./RMNyncwxWyv32'
+    : bcrypt.hashSync('n10-timing-attack-decoy', BCRYPT_COST);
 
 export const loginHandler = async (
   req: ValidatedRequest<LoginInput>,
