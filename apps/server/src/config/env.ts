@@ -25,7 +25,12 @@ const envSchema = z.object({
   // Number of reverse-proxy hops in front of the app (Render/Railway/Fly/Nginx
   // are usually 1). Controls Express `trust proxy` so req.ip — and therefore
   // rate limiting — sees the real client, not the proxy. 0 = trust nobody.
-  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+
+  TRUST_PROXY: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(process.env.VERCEL ? 1 : 0),
 
   // Comma-separated list of browser origins allowed to call the API. Unset or
   // empty falls back to the local dev ports; set the deployed frontend URL(s)

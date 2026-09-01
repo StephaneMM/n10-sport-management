@@ -1,16 +1,21 @@
-import { rateLimit, type Options } from 'express-rate-limit';
+import { rateLimit, ipKeyGenerator, type Options } from 'express-rate-limit';
 
 const MINUTE = 60 * 1000;
 
 /**
  * Base factory so every limiter in the app shares the same JSON error shape and
  * header behaviour. Callers must at least provide `limit` and `windowMs`.
+ *
+ * Keys on the client IP (via `ipKeyGenerator`, which groups an IPv6 address by
+ * its /56 so a single client can't rotate through addresses). This only works
+ * if Express `trust proxy` is set correctly — see config/env TRUST_PROXY.
  */
 export function createRateLimiter(options: Partial<Options> & Pick<Options, 'limit' | 'windowMs'>) {
   return rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { error: 'Too many requests. Please slow down and try again later.' },
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
     ...options,
   });
 }
