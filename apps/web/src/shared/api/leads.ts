@@ -1,4 +1,9 @@
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { apiClient } from "./client";
 import {
@@ -90,5 +95,21 @@ export function useLead(id: string) {
     queryKey: ["leads", id],
     queryFn: () => apiClient<Lead>(`/leads/${id}`),
     enabled: !!id,
+  });
+}
+
+// ─── Update a Lead (Admin) ───────────────────────────────
+
+/** Admin comment and/or triage status. At least one field is required. */
+export type LeadUpdate = { adminComment?: string; status?: string };
+
+export function useUpdateLead(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: LeadUpdate) =>
+      apiClient<Lead>(`/leads/${id}`, { method: "PATCH", body: patch }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+    },
   });
 }

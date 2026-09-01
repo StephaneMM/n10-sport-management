@@ -37,6 +37,7 @@ function makeLeads(count: number) {
     heightCm: 1,
     weightKg: 1,
     highlightLinks: [],
+    status: i % 2 === 0 ? "NEW" : "QUALIFIED",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
   }));
@@ -109,6 +110,19 @@ describe("AdminDashboard", () => {
           params: expect.objectContaining({ sport: "Soccer", page: 2 }),
         }),
       ),
+    );
+  });
+
+  it("reads the status filter from the URL and shows a status badge per row", async () => {
+    renderDashboard("/admin/dashboard?status=QUALIFIED");
+
+    await screen.findByText("First0");
+    // makeLeads alternates NEW / QUALIFIED, so both badge labels are on screen.
+    expect(screen.getByText("New")).toBeInTheDocument();
+    expect(screen.getAllByText("Qualified").length).toBeGreaterThan(0);
+    expect(mockApiClient).toHaveBeenCalledWith(
+      "/leads",
+      expect.objectContaining({ params: expect.objectContaining({ status: "QUALIFIED" }) }),
     );
   });
 });

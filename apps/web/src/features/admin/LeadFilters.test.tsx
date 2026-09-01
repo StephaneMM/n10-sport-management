@@ -49,4 +49,14 @@ describe("LeadFilters", () => {
     expect(screen.getByLabelText("admin.date_from")).toBeInTheDocument();
     expect(screen.getByLabelText("admin.date_to")).toBeInTheDocument();
   });
+
+  it("renders the status filter and clears it with the other filters", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<LeadFilters filters={{}} onChange={onChange} />);
+    expect(screen.getByLabelText("admin.filter_status")).toBeInTheDocument();
+
+    rerender(<LeadFilters filters={{ status: "QUALIFIED" }} onChange={onChange} />);
+    fireEvent.click(screen.getByText("admin.clear_filters"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ status: undefined }));
+  });
 });

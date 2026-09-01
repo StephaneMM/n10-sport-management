@@ -10,8 +10,29 @@ import { useLeads } from "@/shared/api/leads";
 import { logout } from "@/shared/api/auth";
 import { ApiError } from "@/shared/api/client";
 import type { LeadListFilters, LeadSortField } from "@/shared/types/lead";
+import { LEAD_STATUS_LABELS } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import LeadFilters from "./LeadFilters";
+
+const STATUS_BADGE_CLASS: Record<string, string> = {
+  NEW: "bg-primary-foreground/10 text-primary-foreground/70",
+  CONTACTED: "bg-blue-500/15 text-blue-300",
+  QUALIFIED: "bg-gold/15 text-gold",
+  REJECTED: "bg-destructive/15 text-destructive",
+  CONVERTED: "bg-emerald-500/15 text-emerald-300",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-body ${
+        STATUS_BADGE_CLASS[status] ?? STATUS_BADGE_CLASS.NEW
+      }`}
+    >
+      {LEAD_STATUS_LABELS[status] ?? status}
+    </span>
+  );
+}
 
 function readFilters(params: URLSearchParams): LeadListFilters {
   const value = (key: string) => params.get(key) || undefined;
@@ -21,6 +42,7 @@ function readFilters(params: URLSearchParams): LeadListFilters {
     sport: value("sport"),
     nationality: value("nationality"),
     gender: value("gender"),
+    status: value("status"),
     dateFrom: value("dateFrom"),
     dateTo: value("dateTo"),
     sortBy: value("sortBy") as LeadSortField | undefined,
@@ -162,6 +184,7 @@ const AdminDashboard = () => {
                       <SortableHead field="lastName" label={t("admin.last_name")} />
                       <SortableHead field="sport" label={t("admin.sport")} />
                       <SortableHead field="country" label={t("admin.country")} />
+                      <TableHead className={headClass}>{t("admin.status")}</TableHead>
                       <TableHead className={headClass}>{t("admin.email_col")}</TableHead>
                       <TableHead className={`${headClass} text-end`}>{t("admin.action")}</TableHead>
                     </TableRow>
@@ -173,6 +196,7 @@ const AdminDashboard = () => {
                         <TableCell className="text-primary-foreground font-body">{lead.lastName}</TableCell>
                         <TableCell className="text-primary-foreground/70 font-body">{lead.sport}</TableCell>
                         <TableCell className="text-primary-foreground/70 font-body">{lead.country}</TableCell>
+                        <TableCell><StatusBadge status={lead.status} /></TableCell>
                         <TableCell className="text-primary-foreground/70 font-body text-sm">{lead.email}</TableCell>
                         <TableCell className="text-end">
                           <Button asChild variant="ghost" size="sm" className="text-gold hover:text-gold-light font-body text-sm">

@@ -6,15 +6,25 @@ import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { useLead } from "@/shared/api/leads";
+import { useLead, useUpdateLead } from "@/shared/api/leads";
+import { ageInYears } from "@/shared/types/lead";
 import { toast } from "@/hooks/use-toast";
-import { apiClient, ApiError } from "@/shared/api/client";
+import { ApiError } from "@/shared/api/client";
+import { LEAD_STATUSES, LEAD_SOURCES } from "@/shared/constants";
 
 const AdminLeadDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: lead, isLoading, isError, error, refetch } = useLead(id!);
+  const updateLead = useUpdateLead(id!);
   const [comments, setComments] = useState("");
 
   // Seed the comment box once the lead arrives (data is undefined while loading).
@@ -22,13 +32,27 @@ const AdminLeadDetail = () => {
     if (lead) setComments(lead.adminComment ?? "");
   }, [lead]);
 
-  const handleSaveComments = async () => {
-    try {
-      await apiClient(`/leads/${id}`, { method: "PATCH", body: { adminComment: comments } });
-      toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") });
-    } catch {
-      toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" });
-    }
+  const handleSaveComments = () => {
+    updateLead.mutate(
+      { adminComment: comments },
+      {
+        onSuccess: () =>
+          toast({ title: t("admin.comments_updated"), description: t("admin.comments_saved") }),
+        onError: () =>
+          toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" }),
+      },
+    );
+  };
+
+  const handleStatusChange = (status: string) => {
+    updateLead.mutate(
+      { status },
+      {
+        onSuccess: () => toast({ title: t("admin.status_updated") }),
+        onError: () =>
+          toast({ title: t("admin.update_failed"), description: t("admin.update_error"), variant: "destructive" }),
+      },
+    );
   };
 
   if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
@@ -91,6 +115,20 @@ const AdminLeadDetail = () => {
 
       <div className="container px-6 py-10 max-w-4xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+          {/* Triage status */}
+          <DetailSection title={t("admin.status")}>
+            <Select value={lead.status} onValueChange={handleStatusChange} disabled={updateLead.isPending}>
+              <SelectTrigger className="bg-navy-light border-primary-foreground/10 text-primary-foreground sm:max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LEAD_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </DetailSection>
+
           {/* Personal */}
           <DetailSection title={t("admin.personal_info")}>
             <DetailGrid>
@@ -99,8 +137,46 @@ const AdminLeadDetail = () => {
               <DetailItem label={t("admin.country")} value={lead.country} />
               <DetailItem label={t("admin.nationality")} value={lead.nationality} />
               <DetailItem label={t("apply.gender")} value={lead.gender} />
+              <DetailItem label={t("admin.date_of_birth")} value={formatDate(lead.dateOfBirth)} />
+              <DetailItem
+                label={t("admin.age")}
+                value={String(ageInYears(new Date(lead.dateOfBirth)))}
+              />
             </DetailGrid>
           </DetailSection>
+
+          {/* Intake */}
+          <DetailSection title={t("admin.intake")}>
+            <DetailGrid>
+              <DetailItem label={t("admin.source")} value={sourceLabel(lead.source)} />
+              <DetailItem
+                label={t("admin.preferred_language")}
+                value={lead.preferredLanguage ? t(`language.${lead.preferredLanguage.toLowerCase()}`) : "—"}
+              />
+              <DetailItem
+                label={t("admin.consent")}
+                value={lead.consentToContact ? t("admin.consent_yes") : t("admin.consent_no")}
+              />
+            </DetailGrid>
+          </DetailSection>
+
+          {/* Guardian — present only for minors */}
+          {lead.guardianName && (
+            <DetailSection title={t("admin.guardian")}>
+              <DetailGrid>
+                <DetailItem label={t("admin.guardian_name")} value={lead.guardianName} />
+                {lead.guardianRelationship && (
+                  <DetailItem label={t("admin.guardian_relationship")} value={lead.guardianRelationship} />
+                )}
+                {lead.guardianEmail && (
+                  <DetailItem label={t("admin.guardian_email")} value={lead.guardianEmail} />
+                )}
+                {lead.guardianPhone && (
+                  <DetailItem label={t("admin.guardian_phone")} value={lead.guardianPhone} />
+                )}
+              </DetailGrid>
+            </DetailSection>
+          )}
 
           {/* Athletic */}
           <DetailSection title={t("admin.athletic_profile")}>
@@ -154,7 +230,7 @@ const AdminLeadDetail = () => {
 
           {/* Meta */}
           <p className="font-body text-xs text-primary-foreground/30">
-            {t("admin.submitted")}: {new Date(lead.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+            {t("admin.submitted")}: {formatDate(lead.createdAt)}
           </p>
         </motion.div>
       </div>
@@ -163,6 +239,19 @@ const AdminLeadDetail = () => {
 };
 
 // ─── Helpers ──────────────────────────────────────────────
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function sourceLabel(source: string | undefined): string {
+  if (!source) return "—";
+  return LEAD_SOURCES.find((s) => s.value === source)?.label ?? source;
+}
 
 function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (

@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { SPORTS, GENDERS } from "@/shared/constants";
+import { SPORTS, GENDERS, LEAD_STATUSES } from "@/shared/constants";
 import type { LeadListFilters } from "@/shared/types/lead";
 
 // Radix Select can't use "" as a value, so the "all" option needs a sentinel.
@@ -66,6 +66,7 @@ const LeadFilters = ({ filters, onChange }: LeadFiltersProps) => {
       filters.sport ||
       filters.nationality ||
       filters.gender ||
+      filters.status ||
       filters.dateFrom ||
       filters.dateTo,
   );
@@ -118,6 +119,23 @@ const LeadFilters = ({ filters, onChange }: LeadFiltersProps) => {
         label={t("admin.filter_nationality")}
       />
 
+      <Select
+        value={filters.status ?? ALL}
+        onValueChange={(value) => onChange({ status: value === ALL ? undefined : value })}
+      >
+        <SelectTrigger className={INPUT_CLASS} aria-label={t("admin.filter_status")}>
+          <SelectValue placeholder={t("admin.filter_status")} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>{t("admin.filter_all_statuses")}</SelectItem>
+          {LEAD_STATUSES.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       <div className="flex items-center gap-2">
         <Input
           type="date"
@@ -145,6 +163,7 @@ const LeadFilters = ({ filters, onChange }: LeadFiltersProps) => {
               sport: undefined,
               nationality: undefined,
               gender: undefined,
+              status: undefined,
               dateFrom: undefined,
               dateTo: undefined,
             })
