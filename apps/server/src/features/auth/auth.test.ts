@@ -1,19 +1,22 @@
 import request from 'supertest';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
+import { BCRYPT_COST } from '../../lib/password';
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
   },
 }));
 
 const mockedPrisma = prisma as unknown as {
-  user: { findUnique: jest.Mock; create: jest.Mock };
+  user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
 };
 
 const VALID_PASSWORD = 'Passw0rd!';
@@ -27,7 +30,7 @@ async function loginAndGetToken(role = 'ADMIN'): Promise<string> {
   mockedPrisma.user.findUnique.mockResolvedValueOnce({
     id: 'user-1',
     email: 'member@n10.test',
-    password: await bcrypt.hash(VALID_PASSWORD, 10),
+    password: await bcrypt.hash(VALID_PASSWORD, BCRYPT_COST - 2),
     role,
   });
   const response = await request(app)
@@ -91,6 +94,7 @@ describe('POST /api/auth/register', () => {
     ['no uppercase', 'passw0rd!'],
     ['no number', 'Password!'],
     ['no special character', 'Passw0rd1'],
+    ['over the 72-byte bcrypt limit', `A1!${'a'.repeat(80)}`],
   ])('rejects a weak password (%s)', async (_label, password) => {
     const response = await request(app)
       .post('/api/auth/register')
@@ -134,19 +138,50 @@ describe('POST /api/auth/register', () => {
 });
 
 describe('POST /api/auth/login', () => {
-  let passwordHash: string;
+  let legacyHash: string;
 
   beforeAll(async () => {
-    passwordHash = await bcrypt.hash(VALID_PASSWORD, 10);
+    legacyHash = await bcrypt.hash(VALID_PASSWORD, BCRYPT_COST - 2);
   });
 
   beforeEach(() => {
     mockedPrisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       email: 'member@n10.test',
-      password: passwordHash,
+      password: legacyHash,
       role: 'ADMIN',
     });
+    mockedPrisma.user.update.mockResolvedValue({});
+  });
+
+  const costMarker = new RegExp(`^\\$2[aby]\\$${String(BCRYPT_COST).padStart(2, '0')}\\$`);
+
+  it('transparently upgrades a lower-cost password hash on login', async () => {
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'member@n10.test', password: VALID_PASSWORD });
+
+    expect(mockedPrisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'user-1' },
+        data: { password: expect.stringMatching(costMarker) },
+      }),
+    );
+  });
+
+  it('does not re-hash a current-cost password', async () => {
+    mockedPrisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      email: 'member@n10.test',
+      password: await bcrypt.hash(VALID_PASSWORD, BCRYPT_COST),
+      role: 'ADMIN',
+    });
+
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'member@n10.test', password: VALID_PASSWORD });
+
+    expect(mockedPrisma.user.update).not.toHaveBeenCalled();
   });
 
   it('returns a JWT and only the safe user fields on valid credentials', async () => {
@@ -158,6 +193,21 @@ describe('POST /api/auth/login', () => {
     expect(typeof response.body.token).toBe('string');
     expect(response.body.user).toEqual({ id: 'user-1', email: 'member@n10.test', role: 'ADMIN' });
     expect(response.body.user).not.toHaveProperty('password');
+
+    const decoded = jwt.decode(response.body.token) as { iat: number; exp: number };
+    expect(decoded.exp - decoded.iat).toBe(24 * 60 * 60); // 1 day
+  });
+
+  it('still runs bcrypt for an unknown email (no timing oracle)', async () => {
+    mockedPrisma.user.findUnique.mockResolvedValue(null);
+    const compareSpy = jest.spyOn(bcrypt, 'compare');
+
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'ghost@n10.test', password: VALID_PASSWORD });
+
+    expect(compareSpy).toHaveBeenCalled();
+    compareSpy.mockRestore();
   });
 
   it('returns a generic 401 when the email is unknown', async () => {

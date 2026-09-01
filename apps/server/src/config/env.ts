@@ -25,7 +25,12 @@ const envSchema = z.object({
   // Number of reverse-proxy hops in front of the app (Render/Railway/Fly/Nginx
   // are usually 1). Controls Express `trust proxy` so req.ip — and therefore
   // rate limiting — sees the real client, not the proxy. 0 = trust nobody.
-  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+
+  TRUST_PROXY: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(process.env.VERCEL ? 1 : 0),
 
   // Comma-separated list of browser origins allowed to call the API. Unset or
   // empty falls back to the local dev ports; set the deployed frontend URL(s)
@@ -39,6 +44,15 @@ const envSchema = z.object({
       return raw.split(',').map((origin) => origin.trim()).filter(Boolean);
     }),
 
+  // Public POST /api/auth/register. Off by default: it only creates PROSPECT
+  // accounts, and until there is a prospect portal the endpoint is pure attack
+  // surface (account spam, email enumeration). Set to the string "true" to mount
+  // it when the portal ships.
+  ENABLE_PUBLIC_REGISTRATION: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true'),
+
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z
     .string()
@@ -47,6 +61,10 @@ const envSchema = z.object({
       (value) => !FORBIDDEN_JWT_SECRETS.has(value),
       'JWT_SECRET is a known placeholder value — generate a real secret (e.g. `openssl rand -base64 48`)',
     ),
+
+  // Cloudflare Turnstile secret. When set, the public lead form must send a
+  // valid Turnstile token. Unset (local dev, tests) disables the check.
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -64,6 +82,15 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
       .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)
       .join('\n');
     throw new Error(`Invalid environment configuration:\n${details}`);
+  }
+
+  // The CORS_ORIGINS transform falls back to localhost when unset — fine for
+  // dev, but in production that would let a page on localhost make credentialed
+  // calls. Require an explicit allowlist there.
+  if (result.data.NODE_ENV === 'production' && !source.CORS_ORIGINS?.trim()) {
+    throw new Error(
+      'Invalid environment configuration:\n  - CORS_ORIGINS: required in production',
+    );
   }
 
   return result.data;

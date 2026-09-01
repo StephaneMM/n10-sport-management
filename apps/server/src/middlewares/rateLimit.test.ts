@@ -14,6 +14,8 @@ const mockedPrisma = prisma as unknown as {
 
 function buildApp(options: Parameters<typeof createRateLimiter>[0]) {
   const testApp = express();
+  // Match production: trust one proxy hop so req.ip comes from X-Forwarded-For.
+  testApp.set('trust proxy', 1);
   testApp.use(express.json());
   testApp.post('/thing', createRateLimiter(options), (_req, res) => {
     res.status(200).json({ ok: true });
@@ -48,6 +50,15 @@ describe('createRateLimiter', () => {
       // Every request succeeds, so none of them count towards the limit of 2.
       expect((await request(testApp).post('/thing')).status).toBe(200);
     }
+  });
+
+  it('keys each client IP separately (from X-Forwarded-For behind a proxy)', async () => {
+    const testApp = buildApp({ windowMs: 60_000, limit: 1 });
+    const from = (ip: string) => request(testApp).post('/thing').set('X-Forwarded-For', ip);
+
+    expect((await from('203.0.113.1')).status).toBe(200);
+    expect((await from('203.0.113.1')).status).toBe(429); // same client, over limit
+    expect((await from('198.51.100.7')).status).toBe(200); // different client, own bucket
   });
 });
 
@@ -86,5 +97,15 @@ describe('publicLeadLimiter on POST /api/leads', () => {
 
     expect(statuses.slice(0, 15).every((s) => s === 400)).toBe(true);
     expect(statuses).toContain(429);
+  });
+});
+
+describe('apiLimiter', () => {
+  it('is mounted on /api (RateLimit header present) but not on /health', async () => {
+    const apiResponse = await request(app).get('/api/auth/me'); // 401, but limiter ran
+    expect(apiResponse.headers).toHaveProperty('ratelimit');
+
+    const healthResponse = await request(app).get('/health');
+    expect(healthResponse.headers.ratelimit).toBeUndefined();
   });
 });

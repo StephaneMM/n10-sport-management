@@ -6,7 +6,7 @@ describe('GET /health', () => {
     const response = await request(app).get('/health');
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ status: 'ok', message: 'N10 Server is running' });
+    expect(response.body).toEqual({ status: 'ok' });
   });
 });
 

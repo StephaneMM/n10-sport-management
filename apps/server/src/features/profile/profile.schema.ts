@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { httpUrl, httpUrlFrom } from '../../lib/urlSchema';
 
 const TRUSTED_BASE_DOMAINS = [
   'youtube.com', 
@@ -38,34 +39,24 @@ export const createProfileSchema = z.object({
     // We enforce that this is an array of strings
     positions: z.array(z.string()).min(1, "At least one position is required"),
     
-    // We can even tell Zod to ensure every item in the array is a valid URL!
-highlightLinks: z.array(
-      z.string()
-        .url("Must be a valid URL")
-        .refine((val) => {
-          try {
-            // 2. This rips the URL apart. 
-            // 'https://www.youtube.com/watch' becomes hostname: 'www.youtube.com'
-            const parsedUrl = new URL(val);
-            
-            // 3. Check if the exact hostname IS the domain, or ENDS WITH ".domain"
-            return TRUSTED_BASE_DOMAINS.some(domain => 
-              parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
-            );
-          } catch {
-            return false; // If Node can't parse it, block it!
-          }
-        }, {
-          message: "Only approved video, sports and social media platforms are allowed."
-        })
-    ).optional().default([]),
+    // Each link must be an http(s) URL on an approved platform.
+    highlightLinks: z
+      .array(
+        httpUrlFrom(
+          TRUSTED_BASE_DOMAINS,
+          "Only approved video, sports and social media platforms are allowed.",
+        ),
+      )
+      .max(10, "Too many links")
+      .optional()
+      .default([]),
   }),
 });
 
 
 export const addDocumentSchema = z.object({
   body: z.object({
-    url: z.string().url("Must be a valid URL"),
+    url: httpUrl,
     type: z.enum([
       'GOVERNMENT_ID', 
       'HS_TRANSCRIPT', 

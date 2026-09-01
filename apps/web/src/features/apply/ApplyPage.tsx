@@ -13,10 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import { Turnstile } from "@marsidev/react-turnstile";
+
 import { leadFormSchema, isApplicantMinor, type LeadFormValues } from "@/shared/types/lead";
 import { useSubmitLead } from "@/shared/api/leads";
 import { SPORTS, GENDERS, LEAD_SOURCES } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 const ApplyPage = () => {
   const { t } = useTranslation();
@@ -31,7 +35,7 @@ const ApplyPage = () => {
       positions: "", heightCm: undefined as unknown as number, weightKg: undefined as unknown as number,
       verticalJumpCm: "", league: "", currentClub: "",
       highlightLinks: "", messageToUs: "", source: "",
-      consentToContact: false,
+      consentToContact: false, turnstileToken: "",
       guardianName: "", guardianEmail: "", guardianPhone: "", guardianRelationship: "",
     },
   });
@@ -247,10 +251,20 @@ const ApplyPage = () => {
                 )}
               />
 
+              {TURNSTILE_SITE_KEY && (
+                <Turnstile
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => form.setValue("turnstileToken", token)}
+                  onExpire={() => form.setValue("turnstileToken", "")}
+                  onError={() => form.setValue("turnstileToken", "")}
+                  options={{ theme: "dark" }}
+                />
+              )}
+
               <Button
                 type="submit"
                 size="lg"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || (Boolean(TURNSTILE_SITE_KEY) && !form.watch("turnstileToken"))}
                 className="w-full bg-gold text-primary hover:bg-gold-light font-body text-base py-6 tracking-wide"
               >
                 {mutation.isPending ? t("apply.submitting") : t("apply.submit")}

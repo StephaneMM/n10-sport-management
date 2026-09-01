@@ -73,6 +73,7 @@ export const leadFormSchema = z.object({
   consentToContact: z
     .boolean()
     .refine((agreed) => agreed === true, "You must agree to be contacted"),
+  turnstileToken: z.string().optional(),
   guardianName: z.string().optional(),
   guardianEmail: z.string().optional(),
   guardianPhone: z.string().optional(),

@@ -1,14 +1,10 @@
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
-import { HttpError } from '../../lib/httpError';
 import { listLeadsQuerySchema } from './lead.schema';
 
 export const getLeadsHandler = async (req: Request, res: Response): Promise<void> => {
-  if (res.locals.user.role !== 'ADMIN') {
-    throw new HttpError(403, 'Forbidden: You must be an admin to view leads.');
-  }
-
+  // Admin-only — enforced by requireAdmin on the route.
   // A bad query string throws a ZodError, which the errorHandler turns into a
   // 400 with the issue list.
   const {

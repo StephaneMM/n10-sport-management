@@ -1,7 +1,7 @@
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
+import { signToken } from '../../lib/jwt';
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {
@@ -15,7 +15,7 @@ const mockedPrisma = prisma as unknown as {
   prospectProfile: { findUnique: jest.Mock; create: jest.Mock };
 };
 
-const token = jwt.sign({ userId: 'user-1', role: 'PROSPECT' }, process.env.JWT_SECRET as string);
+const token = signToken({ userId: 'user-1', role: 'PROSPECT' });
 
 const validBody = {
   firstName: 'Ada',

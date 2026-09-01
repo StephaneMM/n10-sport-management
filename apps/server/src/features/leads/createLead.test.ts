@@ -10,10 +10,10 @@ jest.mock('../../lib/prisma', () => ({
 // publicLeadLimiter (15/hour) would start returning 429. Rate limiting has its
 // own coverage in rateLimit.test.ts.
 type Next = () => void;
-jest.mock('../../middlewares/rateLimit', () => ({
-  publicLeadLimiter: (_req: unknown, _res: unknown, next: Next) => next(),
-  authLimiter: (_req: unknown, _res: unknown, next: Next) => next(),
-}));
+jest.mock('../../middlewares/rateLimit', () => {
+  const passthrough = (_req: unknown, _res: unknown, next: Next) => next();
+  return { publicLeadLimiter: passthrough, authLimiter: passthrough, apiLimiter: passthrough };
+});
 
 const mockedPrisma = prisma as unknown as { lead: { create: jest.Mock } };
 
@@ -85,6 +85,15 @@ describe('POST /api/leads', () => {
     expect(data.dateOfBirth).toEqual(new Date('2008-05-14'));
   });
 
+  it('rejects a body larger than the JSON limit before parsing it', async () => {
+    const response = await request(app)
+      .post('/api/leads')
+      .send({ ...validLead, messageToUs: 'x'.repeat(20_000) });
+
+    expect(response.status).toBe(413);
+    expect(mockedPrisma.lead.create).not.toHaveBeenCalled();
+  });
+
   it('stores an optional preferredLanguage', async () => {
     await request(app).post('/api/leads').send({ ...validLead, preferredLanguage: 'FR' });
     const { data } = mockedPrisma.lead.create.mock.calls[0][0];
@@ -97,10 +106,14 @@ describe('POST /api/leads', () => {
     ['a non-positive height', { ...validLead, heightCm: -5 }],
     ['no positions', { ...validLead, positions: [] }],
     ['a non-URL highlight link', { ...validLead, highlightLinks: ['not a url'] }],
+    ['a javascript: highlight link', { ...validLead, highlightLinks: ['javascript:alert(document.cookie)'] }],
     ['a missing dateOfBirth', { ...validLead, dateOfBirth: undefined }],
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
     ['a missing source', { ...validLead, source: undefined }],
     ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
+    ['an over-long first name', { ...validLead, firstName: 'a'.repeat(101) }],
+    ['too many positions', { ...validLead, positions: Array.from({ length: 21 }, () => 'X') }],
+    ['an over-long message', { ...validLead, messageToUs: 'x'.repeat(2001) }],
     ['consent not given', { ...validLead, consentToContact: false }],
     ['missing consent', { ...validLead, consentToContact: undefined }],
     ['an unknown preferredLanguage', { ...validLead, preferredLanguage: 'PT' }],

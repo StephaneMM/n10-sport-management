@@ -57,7 +57,13 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
     return;
   }
 
-  console.error('Unhandled error:', err);
+  // Log a curated shape, not the raw error — some errors carry request data
+  // (e.g. body-parser attaches the raw body) that shouldn't land in logs.
+  console.error('Unhandled error', {
+    name: err instanceof Error ? err.name : typeof err,
+    message: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   res.status(500).json({ error: 'Internal server error' });
 };
 

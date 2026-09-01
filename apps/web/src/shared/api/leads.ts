@@ -53,6 +53,7 @@ export function useSubmitLead() {
           data.verticalJumpCm === 0 ? undefined : data.verticalJumpCm,
         // Captured automatically from the site language the applicant used.
         preferredLanguage: toLocaleEnum(i18n.language),
+        turnstileToken: data.turnstileToken || undefined,
         // Drop empty guardian fields so the API sees them as absent, not "".
         guardianName: data.guardianName?.trim() || undefined,
         guardianEmail: data.guardianEmail?.trim() || undefined,
