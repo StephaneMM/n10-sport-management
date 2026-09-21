@@ -42,6 +42,9 @@
   "stories": {
     "badge": "Témoignages",
     "title": "Des Athlètes Qui Ont Réussi",
+    "scroll_hint": "Découvrez d'autres témoignages",
+    "previous": "Témoignage précédent",
+    "next": "Témoignage suivant",
     "mathis_name": "Mathis",
     "naim_name": "Naim",
     "samy_mom_name": "Mme EL MIR TRAQ",

@@ -42,6 +42,9 @@
   "stories": {
     "badge": "Success Stories",
     "title": "Athletes Who Made It",
+    "scroll_hint": "Explore more stories",
+    "previous": "Previous testimonial",
+    "next": "Next testimonial",
     "mathis_name": "Mathis",
     "naim_name": "Naim",
     "samy_mom_name": "Mrs. EL MIR TRAQ",

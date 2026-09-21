@@ -42,6 +42,9 @@
   "stories": {
     "badge": "قصص النجاح",
     "title": "رياضيون حققوا النجاح",
+    "scroll_hint": "اكتشف المزيد من القصص",
+    "previous": "الشهادة السابقة",
+    "next": "الشهادة التالية",
     "mathis_name": "ماتيس",
     "naim_name": "نعيم",
     "samy_mom_name": "السيدة EL MIR TRAQ",
