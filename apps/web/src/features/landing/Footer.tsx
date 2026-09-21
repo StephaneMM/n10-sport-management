@@ -50,18 +50,13 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a href="mailto:contact@n10sport.com" className="font-body text-sm text-primary-foreground/60 hover:text-gold transition-colors">
-                  contact@n10sport.com
+                <a href="mailto:n10.sportsmanagement@gmail.com" className="font-body text-sm text-primary-foreground/60 hover:text-gold transition-colors">
+                  n10.sportsmanagement@gmail.com
                 </a>
               </li>
               <li>
-                <a href="https://instagram.com/n10sport" target="_blank" rel="noopener noreferrer" className="font-body text-sm text-primary-foreground/60 hover:text-gold transition-colors">
+                <a href="https://www.instagram.com/n10_sportsmanagement?stkn=MWFvaGpyaWM4eDhncQ==" target="_blank" rel="noopener noreferrer" className="font-body text-sm text-primary-foreground/60 hover:text-gold transition-colors">
                   Instagram
-                </a>
-              </li>
-              <li>
-                <a href="https://linkedin.com/company/n10sport" target="_blank" rel="noopener noreferrer" className="font-body text-sm text-primary-foreground/60 hover:text-gold transition-colors">
-                  LinkedIn
                 </a>
               </li>
             </ul>
