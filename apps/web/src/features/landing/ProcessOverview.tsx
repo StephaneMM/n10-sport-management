@@ -1,5 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const ProcessOverview = () => {
   const { t } = useTranslation();
@@ -57,6 +60,25 @@ const ProcessOverview = () => {
             </motion.div>
           ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+          className="flex justify-center mt-12"
+        >
+          <Button
+            asChild
+            size="lg"
+            className="bg-gold text-primary hover:bg-gold-light font-body text-base px-8 py-6 tracking-wide"
+          >
+            <Link to="/apply">
+              {t("process.contact_cta")}
+              <ArrowRight className="ms-2 h-5 w-5" />
+            </Link>
+          </Button>
+        </motion.div>
       </div>
     </section>
   );
