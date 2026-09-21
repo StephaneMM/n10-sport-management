@@ -36,14 +36,31 @@
     "step4_title": "Emparejamiento de Programas",
     "step4_desc": "Te conectamos con los entrenadores y programas correctos para tus objetivos.",
     "step5_title": "Oferta e Inscripción",
-    "step5_desc": "Asegura tu oferta, gestiona el papeleo y prepárate para tu viaje."
+    "step5_desc": "Asegura tu oferta, gestiona el papeleo y prepárate para tu viaje.",
+    "contact_cta": "Contáctanos"
   },
   "stories": {
     "badge": "Casos de Éxito",
     "title": "Atletas Que Lo Lograron",
-    "quote1": "N10 hizo lo imposible alcanzable. De Suecia a una beca D1 — se encargaron de todo.",
-    "quote2": "El proceso de elegibilidad era intimidante hasta que N10 intervino. Comunicación clara en cada paso.",
-    "quote3": "Profesionales, precisos y genuinamente invertidos en mi futuro. No podría haberlo hecho sin ellos."
+    "scroll_hint": "Descubre más historias",
+    "previous": "Testimonio anterior",
+    "next": "Testimonio siguiente",
+    "mathis_name": "Mathis",
+    "naim_name": "Naim",
+    "samy_mom_name": "Sra. EL MIR TRAQ",
+    "naim_dad_name": "Sr. CHOUAOUI",
+    "volleyball": "Voleibol",
+    "esport": "E-sport",
+    "student_athlete": "Estudiante-atleta",
+    "parent": "Padre o madre",
+    "naim_family": "Familia de Naim",
+    "samy_ryan_family": "Familia de Samy y Ryan",
+    "mathis_quote": "Contacté con N10 para gestionar mi traslado y todo salió muy bien. Me ayudaron a instalarme en mi nueva vida y mi proyecto como estudiante-atleta va muy bien.",
+    "naim_quote": "Una experiencia más que positiva. N10 me permitió realizar mi proyecto deportivo y académico, con seguimiento y asesoramiento durante todo el año.",
+    "samy_mom_quote": "Sí, estoy muy satisfecha con los servicios de N10 y los recomiendo encarecidamente.",
+    "naim_dad_quote1": "Sinceramente, como padres, ¡nos encantó la experiencia con N10! Fue una aventura estupenda para Naim en su primer año. Lo vimos progresar muchísimo en los entrenamientos y también ganar mucha madurez e independencia.",
+    "naim_dad_quote2_and_3": "En cuanto al viaje y a la puesta en marcha, el acompañamiento estuvo completamente a la altura de nuestras expectativas. Al principio teníamos algunas dudas (¡algo normal para unos padres!), pero N10 nos transmitió mucha tranquilidad. Todo fue claro, organizado y muy fluido, lo que nos permitió aprobar el traslado con total confianza.\n\nEl seguimiento durante la temporada fue realmente excelente. Apreciamos mucho la cercanía de N10 y que se tuviera tanto en cuenta el aspecto humano y mental como la técnica y la preparación física en la cancha.",
+    "naim_dad_quote4": "Durante el periodo del traslado, que siempre es un poco estresante, nos sentimos muy bien acompañados. Los consejos fueron profesionales, transparentes y siempre orientados a lo mejor para el futuro de Naim. Muchas gracias a N10."
   },
   "footer": {
     "description": "Gestión deportiva premium conectando estudiantes-atletas internacionales con oportunidades universitarias en los Estados Unidos.",

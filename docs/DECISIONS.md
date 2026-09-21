@@ -18,8 +18,8 @@ workspaces.
 
 **Consequences.** One `pnpm install`, one CI run, atomic cross-cutting PRs. The
 shared `pnpm-lock.yaml` at the root means every dependency change — even one
-scoped to a single package — touches it; tooling that regenerates lockfiles
-(Dependabot) must be configured carefully (see #16).
+scoped to a single package — touches it; automated lockfile tooling (Dependabot
+version updates) can't keep up, so bumps are done by hand (see #16).
 
 ---
 
@@ -252,18 +252,38 @@ self-review diff, not a second pair of eyes.
 
 ---
 
-## 16. Dependabot: per-directory, conservative
+## 16. No Dependabot version updates; manual bumps + security alerts
 
-**Context.** A grouped "all production deps across both packages" config
-produced a 51-update PR whose pnpm-workspace lockfile Dependabot could not
-regenerate — `--frozen-lockfile` then failed in CI and every Vercel preview.
+**Context.** A `.github/dependabot.yml` for routine version bumps produced a
+51-update PR whose pnpm-workspace lockfile Dependabot could not regenerate
+(`pnpm.overrides` + workspace). `--frozen-lockfile` then failed in CI and every
+Vercel preview. A narrower config still hits the same lockfile bug — Dependabot
+just can't reliably update this repo's lockfile.
 
-**Decision.** One `npm` entry per `package.json` (root, `apps/server`,
-`apps/web`), monthly, minor+patch grouped, majors as individual PRs. Security
-updates (the CVE-triggered kind) are left to the separate GitHub repo setting.
+**Decision.** No `dependabot.yml`. Instead:
 
-**Consequences.** Smaller PRs that Dependabot can lockfile correctly. Fewer,
-slower routine bumps; CVEs still surface promptly via the security setting.
+- **Dependabot alerts + security updates** (GitHub repo settings) — PRs only for
+  actual CVEs: rare, one dep at a time, where the lockfile step usually works.
+  If one ever ships a stale lockfile, fix that single PR by hand.
+- **Routine freshness is manual**, roughly monthly:
+
+  ```bash
+  pnpm outdated -r
+  pnpm update -r
+  git checkout -- '**/package.json'   # revert any bump to an override-pinned dep
+  pnpm install                        # resync the lockfile
+  pnpm install --frozen-lockfile      # the check CI and Vercel run — must be clean
+  pnpm verify
+  ```
+
+  `pnpm update -r` will bump a dependency that is also in `pnpm.overrides`
+  (`@types/react` / `@types/react-dom`, pinned to 18 so Prisma's React-19 types
+  don't leak into the web build), leaving the manifest and lockfile disagreeing.
+  Only `--frozen-lockfile` catches that, so it is a required step.
+
+**Consequences.** No recurring broken PRs or failed preview builds. The cost is
+a ~10-minute manual pass every month or so; the volume is single digits of
+minor bumps per week, none urgent.
 
 ---
 

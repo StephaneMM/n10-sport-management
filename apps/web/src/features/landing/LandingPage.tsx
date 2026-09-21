@@ -9,8 +9,8 @@ const LandingPage = () => {
     <main>
       <HeroSection />
       <ValueProposition />
-      <ProcessOverview />
       <SuccessStories />
+      <ProcessOverview />
       <Footer />
     </main>
   );

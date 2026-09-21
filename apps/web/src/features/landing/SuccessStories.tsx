@@ -1,15 +1,48 @@
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Quote } from "lucide-react";
-
-const stories = [
-  { quoteKey: "stories.quote1", name: "Erik L.", sport: "Basketball", destination: "NCAA Division I" },
-  { quoteKey: "stories.quote2", name: "Amara K.", sport: "Track & Field", destination: "NAIA" },
-  { quoteKey: "stories.quote3", name: "Lucas M.", sport: "Soccer", destination: "NCAA Division II" },
-];
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import TestimonialCard from "./TestimonialCard";
+import { testimonials } from "./testimonialData";
 
 const SuccessStories = () => {
   const { t } = useTranslation();
+  const storiesTrackRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  useEffect(() => {
+    const storiesTrack = storiesTrackRef.current;
+
+    if (!storiesTrack) {
+      return;
+    }
+
+    const updateScrollButtons = () => {
+      const maxScrollLeft = storiesTrack.scrollWidth - storiesTrack.clientWidth;
+      setCanScrollLeft(storiesTrack.scrollLeft > 1);
+      setCanScrollRight(storiesTrack.scrollLeft < maxScrollLeft - 1);
+    };
+
+    updateScrollButtons();
+    storiesTrack.addEventListener("scroll", updateScrollButtons, { passive: true });
+    const resizeObserver = new ResizeObserver(updateScrollButtons);
+
+    resizeObserver.observe(storiesTrack);
+
+    return () => {
+      storiesTrack.removeEventListener("scroll", updateScrollButtons);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  const scrollStories = (direction: "left" | "right") => {
+    storiesTrackRef.current?.scrollBy({
+      left: direction === "right" ? 400 : -400,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <section className="py-24 md:py-32 bg-background">
@@ -27,30 +60,53 @@ const SuccessStories = () => {
           <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground">
             {t("stories.title")}
           </h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-5 inline-flex items-center gap-2 font-body text-xs text-muted-foreground"
+          >
+            {t("stories.scroll_hint")}
+            <ArrowRight className="h-4 w-4 animate-pulse text-accent" aria-hidden="true" />
+          </motion.p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {stories.map((story, i) => (
-            <motion.div
-              key={story.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="p-8 rounded-lg border border-border bg-card"
+        <div className="relative max-w-6xl mx-auto">
+          {canScrollLeft && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="absolute start-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 shadow-md"
+              aria-label={t("stories.previous")}
+              onClick={() => scrollStories("left")}
             >
-              <Quote className="h-8 w-8 text-accent/30 mb-6" />
-              <p className="font-body text-sm text-muted-foreground leading-relaxed mb-8 italic">
-                "{t(story.quoteKey)}"
-              </p>
-              <div>
-                <p className="font-body font-semibold text-card-foreground text-sm">{story.name}</p>
-                <p className="font-body text-xs text-accent">
-                  {story.sport} · {story.destination}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+              <ArrowLeft />
+            </Button>
+          )}
+          {canScrollRight && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="absolute end-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 shadow-md"
+              aria-label={t("stories.next")}
+              onClick={() => scrollStories("right")}
+            >
+              <ArrowRight />
+            </Button>
+          )}
+          <div
+            ref={storiesTrackRef}
+            className="flex items-start gap-8 overflow-x-auto pb-4 snap-x snap-mandatory"
+            aria-label={t("stories.title")}
+            role="region"
+            tabIndex={0}
+          >
+            {testimonials.map((testimonial, index) => (
+              <TestimonialCard key={testimonial.quoteKey} testimonial={testimonial} index={index} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
