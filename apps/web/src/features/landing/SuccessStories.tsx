@@ -1,15 +1,46 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Quote } from "lucide-react";
-
-const stories = [
-  { quoteKey: "stories.quote1", name: "Erik L.", sport: "Basketball", destination: "NCAA Division I" },
-  { quoteKey: "stories.quote2", name: "Amara K.", sport: "Track & Field", destination: "NAIA" },
-  { quoteKey: "stories.quote3", name: "Lucas M.", sport: "Soccer", destination: "NCAA Division II" },
-];
+import TestimonialCard from "./TestimonialCard";
+import { testimonials } from "./testimonialData";
 
 const SuccessStories = () => {
   const { t } = useTranslation();
+  const storiesTrackRef = useRef<HTMLDivElement>(null);
+  const isPausedRef = useRef(false);
+
+  useEffect(() => {
+    const storiesTrack = storiesTrackRef.current;
+
+    if (!storiesTrack || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    let animationFrame: number;
+
+    const autoScroll = () => {
+      if (isPausedRef.current) {
+        animationFrame = window.requestAnimationFrame(autoScroll);
+        return;
+      }
+
+      const maxScrollLeft = storiesTrack.scrollWidth - storiesTrack.clientWidth;
+
+      if (maxScrollLeft > 0) {
+        storiesTrack.scrollLeft += 0.2;
+
+        if (storiesTrack.scrollLeft >= maxScrollLeft) {
+          storiesTrack.scrollLeft = 0;
+        }
+      }
+
+      animationFrame = window.requestAnimationFrame(autoScroll);
+    };
+
+    animationFrame = window.requestAnimationFrame(autoScroll);
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, []);
 
   return (
     <section className="py-24 md:py-32 bg-background">
@@ -29,27 +60,31 @@ const SuccessStories = () => {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {stories.map((story, i) => (
-            <motion.div
-              key={story.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="p-8 rounded-lg border border-border bg-card"
-            >
-              <Quote className="h-8 w-8 text-accent/30 mb-6" />
-              <p className="font-body text-sm text-muted-foreground leading-relaxed mb-8 italic">
-                "{t(story.quoteKey)}"
-              </p>
-              <div>
-                <p className="font-body font-semibold text-card-foreground text-sm">{story.name}</p>
-                <p className="font-body text-xs text-accent">
-                  {story.sport} · {story.destination}
-                </p>
-              </div>
-            </motion.div>
+        <div
+          ref={storiesTrackRef}
+          className="flex max-w-6xl mx-auto items-start gap-8 overflow-x-auto pb-4 snap-x snap-mandatory"
+          aria-label={t("stories.title")}
+          role="region"
+          tabIndex={0}
+          onMouseEnter={() => {
+            isPausedRef.current = true;
+          }}
+          onMouseLeave={() => {
+            isPausedRef.current = false;
+          }}
+          onFocus={() => {
+            isPausedRef.current = true;
+          }}
+          onBlur={() => {
+            isPausedRef.current = false;
+          }}
+        >
+          {testimonials.map((testimonial, index) => (
+            <TestimonialCard
+              key={testimonial.quoteKey}
+              testimonial={testimonial}
+              index={index}
+            />
           ))}
         </div>
       </div>
