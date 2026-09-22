@@ -110,6 +110,8 @@
     "how_heard": "¿Cómo nos conociste?",
     "select_source": "Selecciona una opción",
     "submitting": "Enviando...",
+    "turnstile_unavailable": "No se pudo cargar la verificación de seguridad. Inténtalo de nuevo o contáctanos si el problema continúa.",
+    "turnstile_retry": "Reintentar verificación",
     "consent_label": "Acepto que N10 Sport Management me contacte sobre oportunidades deportivas universitarias, y que N10 procese la información de este formulario con ese fin.",
     "submit": "Enviar Solicitud",
     "thank_you_title": "¡Gracias!",
