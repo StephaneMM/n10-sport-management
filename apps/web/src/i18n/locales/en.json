@@ -110,6 +110,8 @@
     "how_heard": "How did you hear about us?",
     "select_source": "Select an option",
     "submitting": "Submitting...",
+    "turnstile_unavailable": "Security verification could not load. Please try again or contact us if the problem continues.",
+    "turnstile_retry": "Try verification again",
     "consent_label": "I agree to be contacted by N10 Sport Management about collegiate athletic opportunities, and to N10 processing the information in this form for that purpose.",
     "submit": "Submit Application",
     "thank_you_title": "Thank You!",

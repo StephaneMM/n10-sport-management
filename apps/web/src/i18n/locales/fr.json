@@ -110,6 +110,8 @@
     "how_heard": "Comment avez-vous entendu parler de nous ?",
     "select_source": "Sélectionnez une option",
     "submitting": "Envoi en cours...",
+    "turnstile_unavailable": "La vérification de sécurité n'a pas pu se charger. Réessayez ou contactez-nous si le problème persiste.",
+    "turnstile_retry": "Réessayer la vérification",
     "consent_label": "J'accepte d'être contacté par N10 Sport Management au sujet d'opportunités sportives universitaires, et que N10 traite les informations de ce formulaire à cette fin.",
     "submit": "Soumettre la Candidature",
     "thank_you_title": "Merci !",

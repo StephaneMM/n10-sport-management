@@ -25,6 +25,8 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | u
 const ApplyPage = () => {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
+  const [turnstileAttempt, setTurnstileAttempt] = useState(0);
+  const [turnstileError, setTurnstileError] = useState(false);
   const mutation = useSubmitLead();
 
   const form = useForm<LeadFormValues>({
@@ -252,19 +254,48 @@ const ApplyPage = () => {
               />
 
               {TURNSTILE_SITE_KEY && (
-                <Turnstile
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onSuccess={(token) => form.setValue("turnstileToken", token)}
-                  onExpire={() => form.setValue("turnstileToken", "")}
-                  onError={() => form.setValue("turnstileToken", "")}
-                  options={{ theme: "dark" }}
-                />
+                <div className="space-y-3">
+                  <Turnstile
+                    key={turnstileAttempt}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => {
+                      form.setValue("turnstileToken", token);
+                      setTurnstileError(false);
+                    }}
+                    onExpire={() => {
+                      form.setValue("turnstileToken", "");
+                      setTurnstileError(true);
+                    }}
+                    onError={() => {
+                      form.setValue("turnstileToken", "");
+                      setTurnstileError(true);
+                    }}
+                    options={{ theme: "dark" }}
+                  />
+                  {turnstileError && (
+                    <div className="space-y-2 text-sm text-primary-foreground/70">
+                      <p>{t("apply.turnstile_unavailable")}</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          form.setValue("turnstileToken", "");
+                          setTurnstileError(false);
+                          setTurnstileAttempt((attempt) => attempt + 1);
+                        }}
+                      >
+                        {t("apply.turnstile_retry")}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
 
               <Button
                 type="submit"
                 size="lg"
-                disabled={mutation.isPending || (Boolean(TURNSTILE_SITE_KEY) && !form.watch("turnstileToken"))}
+                disabled={mutation.isPending || turnstileError || (Boolean(TURNSTILE_SITE_KEY) && !form.watch("turnstileToken"))}
                 className="w-full bg-gold text-primary hover:bg-gold-light font-body text-base py-6 tracking-wide"
               >
                 {mutation.isPending ? t("apply.submitting") : t("apply.submit")}
