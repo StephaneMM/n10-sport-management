@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 import { useAdminLogin } from "@/shared/api/auth";
+import BrandLogo from "@/components/BrandLogo";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -43,8 +44,8 @@ const AdminLoginPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-10">
-          <Link to="/" className="font-display text-3xl font-bold text-primary-foreground">
-            N10<span className="text-gold">.</span>
+          <Link to="/" aria-label="N10 Sport Management home">
+            <BrandLogo className="h-12 w-36" />
           </Link>
           <p className="font-body text-primary-foreground/50 mt-3 text-sm tracking-wide uppercase">
             {t("admin.portal")}

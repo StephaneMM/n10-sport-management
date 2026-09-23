@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { useLeads } from "@/shared/api/leads";
 import { logout } from "@/shared/api/auth";
+import BrandLogo from "@/components/BrandLogo";
 import { ApiError } from "@/shared/api/client";
 import type { LeadListFilters, LeadSortField } from "@/shared/types/lead";
 import { LEAD_STATUS_LABELS } from "@/shared/constants";
@@ -113,8 +114,8 @@ const AdminDashboard = () => {
       <header className="border-b border-primary-foreground/10">
         <div className="container px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="font-display text-2xl font-bold text-primary-foreground">
-              N10<span className="text-gold">.</span>
+            <Link to="/" aria-label="N10 Sport Management home">
+              <BrandLogo className="h-10 w-28" />
             </Link>
             <span className="font-body text-xs tracking-widest uppercase text-primary-foreground/40 ms-2">
               {t("nav.admin")}

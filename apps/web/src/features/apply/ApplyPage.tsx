@@ -19,6 +19,7 @@ import { leadFormSchema, isApplicantMinor, type LeadFormValues } from "@/shared/
 import { useSubmitLead } from "@/shared/api/leads";
 import { SPORTS, GENDERS, LEAD_SOURCES } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import BrandLogo from "@/components/BrandLogo";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -81,8 +82,8 @@ const ApplyPage = () => {
       {/* Header */}
       <div className="border-b border-primary-foreground/10">
         <div className="container px-6 py-6 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold text-primary-foreground">
-            N10<span className="text-gold">.</span>
+          <Link to="/" aria-label="N10 Sport Management home">
+            <BrandLogo className="h-10 w-28" />
           </Link>
           <LanguageSwitcher variant="dark" />
         </div>
