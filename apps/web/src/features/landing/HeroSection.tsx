@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import BrandLogo from "@/components/BrandLogo";
 
 const HeroSection = () => {
   const { t } = useTranslation();
@@ -21,9 +22,20 @@ const HeroSection = () => {
         backgroundSize: "60px 60px",
       }} />
 
-      <div className="container relative z-10 px-6 py-24 md:py-32">
+      <div className="container relative z-10 px-6 pt-20 pb-36 md:pt-24 md:pb-48">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex justify-center mb-8"
+          >
+            <Link to="/" aria-label="N10 Sport Management home">
+              <BrandLogo className="h-20 w-56 md:h-28 md:w-80" />
+            </Link>
+          </motion.div>
+
+          {/* <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
@@ -31,7 +43,7 @@ const HeroSection = () => {
             <span className="inline-block mb-6 text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold">
               {t("hero.badge")}
             </span>
-          </motion.div>
+          </motion.div> */}
 
           <motion.h1
             initial={{ opacity: 0, y: 30 }}

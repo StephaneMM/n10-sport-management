@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import BrandLogo from "@/components/BrandLogo";
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -10,9 +11,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="md:col-span-2">
-            <h3 className="font-display text-2xl font-bold text-primary-foreground mb-4">
-              N10<span className="text-gold">.</span>
-            </h3>
+            <BrandLogo className="h-12 w-32 mb-4" />
             <p className="font-body text-sm text-primary-foreground/50 max-w-sm leading-relaxed">
               {t("footer.description")}
             </p>
