@@ -1,6 +1,7 @@
 import mathisPhoto from "@/assets/testimonials/mathis.jpeg";
 import elMirTraqPhoto from "@/assets/testimonials/el-mir-traq.jpeg";
 import naimPhoto from "@/assets/testimonials/naim.jpeg";
+import chouaouiPhoto from "@/assets/testimonials/chouai.jpeg";
 
 export type Testimonial = {
   quoteKey: string;
@@ -25,6 +26,7 @@ export const testimonials: Testimonial[] = [
     nameKey: "stories.naim_dad_name",
     sportKey: "stories.parent",
     destinationKey: "stories.naim_family",
+    photoSrc: chouaouiPhoto,
   },
   {
     quoteKey: "stories.naim_quote",
@@ -39,6 +41,7 @@ export const testimonials: Testimonial[] = [
     nameKey: "stories.naim_dad_name",
     sportKey: "stories.parent",
     destinationKey: "stories.naim_family",
+    photoSrc: chouaouiPhoto,
   },
   {
     quoteKey: "stories.samy_mom_quote",
@@ -52,5 +55,6 @@ export const testimonials: Testimonial[] = [
     nameKey: "stories.naim_dad_name",
     sportKey: "stories.parent",
     destinationKey: "stories.naim_family",
+    photoSrc: chouaouiPhoto,
   },
 ];
