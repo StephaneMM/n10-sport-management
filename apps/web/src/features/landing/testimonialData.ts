@@ -2,6 +2,7 @@ import mathisPhoto from "@/assets/testimonials/mathis.jpeg";
 import elMirTraqPhoto from "@/assets/testimonials/el-mir-traq.jpeg";
 import naimPhoto from "@/assets/testimonials/naim.jpeg";
 import chouaouiPhoto from "@/assets/testimonials/chouai.jpeg";
+import mohamedPhoto from "@/assets/testimonials/mohamed.jpeg";
 
 export type Testimonial = {
   quoteKey: string;
@@ -22,6 +23,13 @@ export const testimonials: Testimonial[] = [
     instagramHandle: "Mathis.tpn",
   },
   {
+    quoteKey: "stories.mohamed_quote1",
+    nameKey: "stories.mohamed_name",
+    sportKey: "stories.volleyball",
+    destinationKey: "stories.student_athlete",
+    photoSrc: mohamedPhoto,
+  },
+  {
     quoteKey: "stories.naim_dad_quote1",
     nameKey: "stories.naim_dad_name",
     sportKey: "stories.parent",
@@ -35,6 +43,13 @@ export const testimonials: Testimonial[] = [
     destinationKey: "stories.student_athlete",
     photoSrc: naimPhoto,
     instagramHandle: "Mach.1.1",
+  },
+  {
+    quoteKey: "stories.mohamed_quote2",
+    nameKey: "stories.mohamed_name",
+    sportKey: "stories.volleyball",
+    destinationKey: "stories.student_athlete",
+    photoSrc: mohamedPhoto,
   },
   {
     quoteKey: "stories.naim_dad_quote2_and_3",
@@ -51,10 +66,24 @@ export const testimonials: Testimonial[] = [
     photoSrc: elMirTraqPhoto,
   },
   {
+    quoteKey: "stories.mohamed_quote3",
+    nameKey: "stories.mohamed_name",
+    sportKey: "stories.volleyball",
+    destinationKey: "stories.student_athlete",
+    photoSrc: mohamedPhoto,
+  },
+  {
     quoteKey: "stories.naim_dad_quote4",
     nameKey: "stories.naim_dad_name",
     sportKey: "stories.parent",
     destinationKey: "stories.naim_family",
     photoSrc: chouaouiPhoto,
+  },
+  {
+    quoteKey: "stories.mohamed_quote4",
+    nameKey: "stories.mohamed_name",
+    sportKey: "stories.volleyball",
+    destinationKey: "stories.student_athlete",
+    photoSrc: mohamedPhoto,
   },
 ];
