@@ -65,6 +65,20 @@ const envSchema = z.object({
   // Cloudflare Turnstile secret. When set, the public lead form must send a
   // valid Turnstile token. Unset (local dev, tests) disables the check.
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+
+  // Resend API key. When set, every new lead is emailed to LEAD_NOTIFICATION_TO.
+  // Unset (local dev, tests) disables the email.
+  RESEND_API_KEY: z.string().min(1).optional(),
+  LEAD_NOTIFICATION_TO: z.string().email().default('n10.sportsmanagement@gmail.com'),
+  // Must be on a domain verified in Resend. The address needs no mailbox:
+  // replies go to the applicant (reply_to), never back to this sender.
+  LEAD_NOTIFICATION_FROM: z
+    .string()
+    .min(1)
+    .default('N10 Website <notifications@n10-sportsmanagement.com>'),
+  // Web app the email links to for opening the lead in the admin. Differs per
+  // environment, so it has no default here; unset leaves the link out.
+  ADMIN_APP_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
