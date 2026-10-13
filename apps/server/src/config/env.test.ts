@@ -28,6 +28,21 @@ describe('parseEnv', () => {
     ).toEqual(['https://a.com', 'https://b.com']);
   });
 
+  it('defaults the lead notification to the N10 inbox and domain, with no admin link', () => {
+    const env = parseEnv(validSource);
+
+    expect(env.RESEND_API_KEY).toBeUndefined();
+    expect(env.LEAD_NOTIFICATION_TO).toBe('n10.sportsmanagement@gmail.com');
+    expect(env.LEAD_NOTIFICATION_FROM).toBe('N10 Website <notifications@n10-sportsmanagement.com>');
+    expect(env.ADMIN_APP_URL).toBeUndefined();
+  });
+
+  it('throws when LEAD_NOTIFICATION_TO is not an email', () => {
+    expect(() => parseEnv({ ...validSource, LEAD_NOTIFICATION_TO: 'n10' })).toThrow(
+      /LEAD_NOTIFICATION_TO/,
+    );
+  });
+
   it('coerces PORT and TRUST_PROXY to numbers', () => {
     const env = parseEnv({ ...validSource, PORT: '8080', TRUST_PROXY: '1' });
     expect(env.PORT).toBe(8080);

@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { app } from '../../server';
 import { prisma } from '../../lib/prisma';
+import { notifyNewLead } from './notifyNewLead';
 
 jest.mock('../../lib/prisma', () => ({
   prisma: { lead: { create: jest.fn() } },
@@ -15,7 +16,10 @@ jest.mock('../../middlewares/rateLimit', () => {
   return { publicLeadLimiter: passthrough, authLimiter: passthrough, apiLimiter: passthrough };
 });
 
+jest.mock('./notifyNewLead', () => ({ notifyNewLead: jest.fn() }));
+
 const mockedPrisma = prisma as unknown as { lead: { create: jest.Mock } };
+const mockedNotify = notifyNewLead as jest.Mock;
 
 const validLead = {
   firstName: 'Ana',
@@ -54,6 +58,24 @@ describe('POST /api/leads', () => {
         data: expect.objectContaining({ firstName: 'Ana', positions: ['Outside Hitter'] }),
       }),
     );
+  });
+
+  it('notifies the N10 team with the saved lead', async () => {
+    await request(app).post('/api/leads').send(validLead);
+
+    expect(mockedNotify).toHaveBeenCalledTimes(1);
+    expect(mockedNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'lead-1', email: 'ana@example.com' }),
+    );
+  });
+
+  it('does not notify when the submission is invalid', async () => {
+    const response = await request(app)
+      .post('/api/leads')
+      .send({ ...validLead, email: 'not-an-email' });
+
+    expect(response.status).toBe(400);
+    expect(mockedNotify).not.toHaveBeenCalled();
   });
 
   it('defaults highlightLinks to an empty array', async () => {
