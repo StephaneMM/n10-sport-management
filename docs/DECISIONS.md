@@ -287,6 +287,35 @@ minor bumps per week, none urgent.
 
 ---
 
+## 17. New-lead email via Resend, best effort
+
+**Context.** New applications only showed up when someone opened the admin
+dashboard; the team wants to know as soon as a lead comes in.
+
+**Decision.** After a lead is saved, `notifyNewLead` emails
+`n10.sportsmanagement@gmail.com` through Resend's HTTP API (a plain `fetch`, no
+SDK), plain text, with `reply_to` set to the applicant. The sender is
+`notifications@n10-sportsmanagement.com`; the domain is verified in Resend
+(DNS at IONOS) and the address has no mailbox. The send is **awaited** —
+Vercel may freeze the function once the response is sent — capped at 5 s, and
+never throws: a failure is logged and the applicant still gets their `201`.
+A **no-op when `RESEND_API_KEY` is unset**; the key (Sending access, this
+domain only) is set in Production only. Sender and recipient have code
+defaults; `ADMIN_APP_URL` differs per environment, so it lives only in env.
+
+**Alternatives.** Gmail SMTP with an app password (new dependency, slow SMTP
+handshake from serverless, Google may block it); Zapier/Make (third party
+holds lead data, paid); a queue with retries (overkill for one email per
+submission).
+
+**Consequences.** Adds the send time to each submission. No retry: a lead
+whose email fails is still in the dashboard, so nothing is lost. Previews and
+local dev never email the real inbox. Marketing email, if it comes, should use
+its own verified subdomain (e.g. `news.`) to keep this domain's reputation
+clean.
+
+---
+
 ## Known gaps
 
 Tracked here so they aren't forgotten:

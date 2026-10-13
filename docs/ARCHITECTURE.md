@@ -14,7 +14,7 @@ How the system is put together today. For *why* each choice was made, see
                                 ▼
                  ┌─────────────────────────────┐
                  │ n10-sports-management-server│  Vercel serverless fn (apps/server)
-                 │  (Express, one function)    │
+                 │  (Express, one function)    │ ──▶ Resend (new-lead email)
                  └──────────────┬──────────────┘
                                 │  pg (pooled)
                                 ▼
@@ -65,7 +65,7 @@ src/features/<feature>/
 ```
 
 Features: `auth` (register/login/me), `leads` (public create + admin
-list/read/update), `profile` (prospect profile CRUD — built, not yet exposed in
+list/read/update; a new lead is emailed to the N10 inbox by `notifyNewLead`), `profile` (prospect profile CRUD — built, not yet exposed in
 the UI).
 
 ### Middleware (`src/middlewares`)
@@ -87,7 +87,10 @@ to `errorHandler`.
 `process.env` is parsed once, at import, by a Zod schema. If anything required
 is missing/weak/placeholder the process throws before it listens. Notable
 rules: `JWT_SECRET` ≥ 32 chars and not a known placeholder; `CORS_ORIGINS`
-required in production; `TRUST_PROXY` defaults to `1` on Vercel.
+required in production; `TRUST_PROXY` defaults to `1` on Vercel. Optional
+integrations are no-ops until their key is set: `TURNSTILE_SECRET_KEY` (bot
+check) and `RESEND_API_KEY` (new-lead email; `ADMIN_APP_URL` adds a link to the
+lead).
 
 ## Data model (`apps/server/prisma`)
 

@@ -44,6 +44,19 @@ Set environment variables (Production):
 | `NODE_ENV` | `production` |
 | `TRUST_PROXY` | `1` |
 | `CORS_ORIGINS` | your web URL, e.g. `https://n10-web.vercel.app` (add it after step 4) |
+| `RESEND_API_KEY` | turns on the new-lead email (see below) — **Production only** |
+| `ADMIN_APP_URL` | `https://www.n10-sportsmanagement.com` — the email links to the lead there |
+
+**New-lead email.** Each submission is emailed to `n10.sportsmanagement@gmail.com`
+from `notifications@n10-sportsmanagement.com`, with Reply going to the applicant.
+`n10-sportsmanagement.com` is verified in Resend (DNS at IONOS: DKIM on
+`resend._domainkey`, MX + SPF on `send`, DMARC on `_dmarc`). In Resend, create a
+key named `n10-api-production` with **Sending access** restricted to that domain,
+and set it as `RESEND_API_KEY`. Keep it out of Preview so branch tests don't
+email the real inbox; without the key no email is sent. Override the defaults
+with `LEAD_NOTIFICATION_TO` or `LEAD_NOTIFICATION_FROM` if needed. A failed
+email is logged (`Lead notification` in the Vercel logs) and never blocks the
+submission.
 
 Deploy. Note the URL, e.g. `https://n10-api.vercel.app`. Check
 `https://n10-api.vercel.app/health` returns `{"status":"ok",...}`.
@@ -61,7 +74,7 @@ Then go back to the api project and set `CORS_ORIGINS` to the web URL, redeploy.
 ## 5. Smoke test
 
 - open the web URL → landing page
-- `/apply` → submit the form → "Thank you"
+- `/apply` → submit the form → "Thank you" → the email arrives in the N10 inbox
 - `/admin/login` → the seeded admin → the submission is in the table
 
 ---
