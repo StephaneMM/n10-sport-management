@@ -32,3 +32,15 @@ describe("ApplyPage numeric inputs", () => {
     expect(height).toHaveValue(0);
   });
 });
+
+describe("ApplyPage consent checkbox", () => {
+  it("centers the checkbox vertically beside its label", () => {
+    render(<ApplyPage />);
+
+    const checkbox = screen.getByRole("checkbox");
+    const consentRow = checkbox.parentElement;
+
+    expect(consentRow).toHaveClass("items-center");
+    expect(consentRow).not.toHaveClass("items-start");
+  });
+});
