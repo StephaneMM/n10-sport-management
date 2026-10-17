@@ -115,6 +115,10 @@ describe("leadFormSchema", () => {
   });
 
   it.each([
+    ["a height below the supported range", { heightCm: 99 }],
+    ["a height above the supported range", { heightCm: 251 }],
+    ["a weight below the supported range", { weightKg: 29 }],
+    ["a weight above the supported range", { weightKg: 201 }],
     ["more than 20 positions", { positions: Array.from({ length: 21 }, () => "Position").join(", ") }],
     ["a position over 60 characters", { positions: "P".repeat(61) }],
     ["an invalid highlight link", { highlightLinks: "not a URL" }],
@@ -150,6 +154,12 @@ describe("leadFormSchema", () => {
         guardianPhone: "+55 11 98888-0000",
       }).success,
     ).toBe(true);
+  });
+
+  it("validates guardian email whenever it is provided", () => {
+    expect(
+      leadFormSchema.safeParse({ ...validFormValues, guardianEmail: "not-an-email" }).success,
+    ).toBe(false);
   });
 });
 
