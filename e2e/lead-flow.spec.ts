@@ -30,7 +30,7 @@ test('a prospect who fills the public form is visible to an admin', async ({ pag
 
   await page.getByRole('checkbox').check();
 
-  await page.getByRole('button', { name: /submit application/i }).click();
+  await page.getByRole('button', { name: /free profile assessment/i }).click();
   await expect(page.getByText(/thank you/i)).toBeVisible();
 
   // 2. Admin logs in.
