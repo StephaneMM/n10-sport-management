@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import ApplyPage from "./ApplyPage";
@@ -14,9 +15,17 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
+function renderApplyPage() {
+  return render(
+    <MemoryRouter initialEntries={["/apply"]}>
+      <ApplyPage />
+    </MemoryRouter>,
+  );
+}
+
 describe("ApplyPage numeric inputs", () => {
   it("does not allow negative values through keyboard or direct input", () => {
-    render(<ApplyPage />);
+    renderApplyPage();
 
     const height = screen.getByLabelText("apply.height");
     const numericInputs = screen.getAllByRole("spinbutton");
@@ -35,7 +44,7 @@ describe("ApplyPage numeric inputs", () => {
 
 describe("ApplyPage consent checkbox", () => {
   it("centers the checkbox vertically beside its label", () => {
-    render(<ApplyPage />);
+    renderApplyPage();
 
     const checkbox = screen.getByRole("checkbox");
     const consentRow = checkbox.parentElement;
