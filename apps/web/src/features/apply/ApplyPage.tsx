@@ -16,12 +16,42 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Turnstile } from "@marsidev/react-turnstile";
 
 import { leadFormSchema, isApplicantMinor, type LeadFormValues } from "@/shared/types/lead";
+import { apiClient } from "@/shared/api/client";
 import { useSubmitLead } from "@/shared/api/leads";
 import { SPORTS, GENDERS, LEAD_SOURCES } from "@/shared/constants";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import BrandLogo from "@/components/BrandLogo";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+
+function reportFormDiagnostic(payload: {
+  event: string;
+  fields?: Array<{
+    field: string;
+    code: string;
+    valueType: string;
+    valueLength?: number;
+    itemCount?: number;
+  }>;
+  httpStatus?: number;
+  failureType?: "api" | "network";
+}) {
+  const diagnostic = {
+    ...payload,
+    siteKeyConfigured: Boolean(TURNSTILE_SITE_KEY),
+  };
+
+  if (import.meta.env.DEV) {
+    console.info("Lead form diagnostics", diagnostic);
+  }
+
+  // Only send validation metadata and status. Applicant-entered values and
+  // Turnstile tokens are never included in diagnostics.
+  void apiClient("/diagnostics/form-validation", {
+    method: "POST",
+    body: diagnostic,
+  }).catch(() => undefined);
+}
 
 const ApplyPage = () => {
   const { t } = useTranslation();
@@ -51,7 +81,18 @@ const ApplyPage = () => {
         form.reset();
         setSubmitted(true);
       },
-      onError: () => {
+      onError: (error: unknown) => {
+        const httpStatus =
+          typeof error === "object" && error !== null && "status" in error &&
+          typeof error.status === "number"
+            ? error.status
+            : undefined;
+        reportFormDiagnostic({
+          event: "submission_failed",
+          httpStatus,
+          failureType: httpStatus === undefined ? "network" : "api",
+        });
+
         // Turnstile tokens are single-use. The API verifies one before lead
         // validation, so even a 400 consumes it and a retry needs a new token.
         if (TURNSTILE_SITE_KEY) {
@@ -61,6 +102,31 @@ const ApplyPage = () => {
         }
       },
     });
+  };
+
+  const onInvalid = () => {
+    const values = form.getValues();
+    const result = leadFormSchema.safeParse(values);
+    if (result.success) return;
+
+    const fields = result.error.issues.map((issue) => {
+      const field = String(issue.path[0] ?? "form");
+      const value = (values as Record<string, unknown>)[field];
+      const valueType = value === null
+        ? "null"
+        : Array.isArray(value)
+          ? "array"
+          : typeof value;
+
+      return {
+        field,
+        code: issue.code,
+        valueType,
+        ...(typeof value === "string" ? { valueLength: value.length } : {}),
+        ...(Array.isArray(value) ? { itemCount: value.length } : {}),
+      };
+    });
+    reportFormDiagnostic({ event: "client_validation_failed", fields });
   };
 
   if (submitted) {
@@ -113,7 +179,7 @@ const ApplyPage = () => {
           </p>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
               {/* Personal Info */}
               <Section title={t("apply.personal_info")}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -275,10 +341,12 @@ const ApplyPage = () => {
                     onExpire={() => {
                       form.setValue("turnstileToken", "");
                       setTurnstileError(true);
+                      reportFormDiagnostic({ event: "turnstile_token_expired" });
                     }}
                     onError={() => {
                       form.setValue("turnstileToken", "");
                       setTurnstileError(true);
+                      reportFormDiagnostic({ event: "turnstile_widget_error" });
                     }}
                     options={{ theme: "dark" }}
                   />
