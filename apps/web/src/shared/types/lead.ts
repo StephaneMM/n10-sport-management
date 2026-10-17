@@ -76,7 +76,7 @@ export const leadFormSchema = z.object({
   positions: z.string().min(1, "At least one position is required"),
   heightCm: z.coerce.number().min(100, "Height must be at least 100cm").max(250, "Height must be under 250cm"),
   weightKg: z.coerce.number().min(30, "Weight must be at least 30kg").max(200, "Weight must be under 200kg"),
-  verticalJumpCm: z.coerce.number().min(0).max(200).optional().or(z.literal("")),
+  verticalJumpCm: z.string().trim().length(0).or(z.coerce.number().positive().max(200)).optional(),
   league: z.string().max(120).optional(),
   currentClub: z.string().max(120).optional(),
   highlightLinks: z.string().optional(),

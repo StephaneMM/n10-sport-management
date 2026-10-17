@@ -103,6 +103,17 @@ describe("leadFormSchema", () => {
     expect(leadFormSchema.safeParse(validFormValues).success).toBe(true);
   });
 
+  it.each(["", " ", "  "])("treats %j vertical jump input as blank", (verticalJumpCm) => {
+    const result = leadFormSchema.safeParse({ ...validFormValues, verticalJumpCm });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.verticalJumpCm).toBe("");
+  });
+
+  it.each(["0", 0])("rejects zero vertical jump input %j like the API", (verticalJumpCm) => {
+    expect(leadFormSchema.safeParse({ ...validFormValues, verticalJumpCm }).success).toBe(false);
+  });
+
   it.each([
     ["more than 20 positions", { positions: Array.from({ length: 21 }, () => "Position").join(", ") }],
     ["a position over 60 characters", { positions: "P".repeat(61) }],
@@ -160,6 +171,28 @@ describe("useSubmitLead", () => {
       preferredLanguage: "FR",
     });
     expect(options?.body).toHaveProperty("verticalJumpCm", undefined);
+  });
+
+  it.each([" ", "  "])("omits whitespace-only vertical jump input %j", async (verticalJumpCm) => {
+    mockApiClient.mockResolvedValue({ id: "lead-1" });
+
+    const { result } = renderHook(() => useSubmitLead(), { wrapper });
+    result.current.mutate({ ...validFormValues, verticalJumpCm });
+
+    await waitFor(() => expect(mockApiClient).toHaveBeenCalled());
+    const [, options] = mockApiClient.mock.calls[0];
+    expect(options?.body).toHaveProperty("verticalJumpCm", undefined);
+  });
+
+  it("converts a positive vertical jump string to a number", async () => {
+    mockApiClient.mockResolvedValue({ id: "lead-1" });
+
+    const { result } = renderHook(() => useSubmitLead(), { wrapper });
+    result.current.mutate({ ...validFormValues, verticalJumpCm: "45" });
+
+    await waitFor(() => expect(mockApiClient).toHaveBeenCalled());
+    const [, options] = mockApiClient.mock.calls[0];
+    expect(options?.body).toHaveProperty("verticalJumpCm", 45);
   });
 
   it("drops blank comma-separated position entries before POSTing", async () => {

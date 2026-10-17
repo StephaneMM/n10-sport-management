@@ -31,6 +31,10 @@ export function useSubmitLead() {
   const { i18n } = useTranslation();
   return useMutation({
     mutationFn: (data: LeadFormValues) => {
+      const verticalJumpCm =
+        typeof data.verticalJumpCm === "string"
+          ? data.verticalJumpCm.trim()
+          : data.verticalJumpCm;
       const payload = {
         ...data,
         // The form collects DD/MM/YYYY; the API expects an ISO date.
@@ -50,7 +54,10 @@ export function useSubmitLead() {
               .filter(Boolean)
           : [],
         verticalJumpCm:
-          data.verticalJumpCm === 0 ? undefined : data.verticalJumpCm,
+          verticalJumpCm === "" ||
+          verticalJumpCm === undefined
+            ? undefined
+            : Number(verticalJumpCm),
         // Captured automatically from the site language the applicant used.
         preferredLanguage: toLocaleEnum(i18n.language),
         turnstileToken: data.turnstileToken || undefined,
