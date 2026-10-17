@@ -65,8 +65,14 @@ export async function apiClient<T>(
   if (!response.ok) {
     // The API returns `{ error: string }`; tolerate `{ message }` and empty bodies.
     const payload = await response.json().catch(() => null);
+    const validationMessage = Array.isArray(payload?.errors)
+      ? payload.errors
+          .map((issue: { message?: unknown }) => issue.message)
+          .filter((message: unknown): message is string => typeof message === "string")
+          .join(" ")
+      : undefined;
     const message =
-      payload?.error || payload?.message || `Request failed (${response.status})`;
+      payload?.error || payload?.message || validationMessage || `Request failed (${response.status})`;
 
     // A rejected token is worthless — drop it so the app stops sending it and
     // ProtectedRoute sends the user back to the login screen.
