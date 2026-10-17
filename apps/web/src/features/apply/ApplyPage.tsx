@@ -311,12 +311,12 @@ const ApplyPage = () => {
                 control={form.control}
                 name="consentToContact"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start gap-3 rounded-md border border-primary-foreground/10 bg-navy-light p-4">
+                  <FormItem className="flex flex-row items-center gap-3 rounded-md border border-primary-foreground/10 bg-navy-light p-4">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        className="mt-0.5 border-primary-foreground/30 data-[state=checked]:bg-gold data-[state=checked]:text-primary"
+                        className="shrink-0 border-primary-foreground/30 data-[state=checked]:bg-gold data-[state=checked]:text-primary"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-snug">
@@ -459,6 +459,22 @@ function Field({
               type={type}
               placeholder={placeholder}
               value={field.value ?? ""}
+              min={type === "number" ? 0 : undefined}
+              onKeyDown={type === "number" ? (event) => {
+                if (event.key === "-" || event.key === "e" || event.key === "E") {
+                  event.preventDefault();
+                }
+              } : undefined}
+              onChange={type === "number" ? (event) => {
+                const rawValue = event.currentTarget.value;
+                if (rawValue === "") {
+                  field.onChange("");
+                  return;
+                }
+
+                const numericValue = Number(rawValue);
+                field.onChange(Number.isFinite(numericValue) ? Math.max(0, numericValue) : "");
+              } : field.onChange}
               className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30"
             />
           </FormControl>
