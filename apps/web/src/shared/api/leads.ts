@@ -41,7 +41,7 @@ export function useSubmitLead() {
 
         positions:
           typeof data.positions === "string"
-            ? data.positions.split(",").map((p) => p.trim())
+            ? data.positions.split(",").map((p) => p.trim()).filter(Boolean)
             : data.positions,
         highlightLinks: data.highlightLinks
           ? data.highlightLinks
@@ -49,14 +49,8 @@ export function useSubmitLead() {
               .map((l) => l.trim())
               .filter(Boolean)
           : [],
-        // This field is optional. The form's empty input is `""`, but the API
-        // schema accepts only a positive number or an omitted property.
         verticalJumpCm:
-          data.verticalJumpCm === "" ||
-          data.verticalJumpCm === undefined ||
-          data.verticalJumpCm === 0
-            ? undefined
-            : Number(data.verticalJumpCm),
+          data.verticalJumpCm === 0 ? undefined : data.verticalJumpCm,
         // Captured automatically from the site language the applicant used.
         preferredLanguage: toLocaleEnum(i18n.language),
         turnstileToken: data.turnstileToken || undefined,

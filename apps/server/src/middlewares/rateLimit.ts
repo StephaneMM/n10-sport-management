@@ -44,6 +44,13 @@ export const publicLeadLimiter = createRateLimiter({
   message: { error: 'Too many submissions from this network. Please try again later.' },
 });
 
+/** Keep the public, metadata-only form diagnostics endpoint from being used as a log sink. */
+export const formDiagnosticsLimiter = createRateLimiter({
+  windowMs: 15 * MINUTE,
+  limit: 20,
+  message: { error: 'Too many diagnostic events. Please try again later.' },
+});
+
 /**
  * Coarse ceiling on all of /api, so an authenticated caller (or a stolen token)
  * can't hammer the read endpoints without limit. Generous enough that normal

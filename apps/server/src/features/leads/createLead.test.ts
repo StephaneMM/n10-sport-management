@@ -13,7 +13,12 @@ jest.mock('../../lib/prisma', () => ({
 type Next = () => void;
 jest.mock('../../middlewares/rateLimit', () => {
   const passthrough = (_req: unknown, _res: unknown, next: Next) => next();
-  return { publicLeadLimiter: passthrough, authLimiter: passthrough, apiLimiter: passthrough };
+  return {
+    publicLeadLimiter: passthrough,
+    authLimiter: passthrough,
+    apiLimiter: passthrough,
+    formDiagnosticsLimiter: passthrough,
+  };
 });
 
 jest.mock('./notifyNewLead', () => ({ notifyNewLead: jest.fn() }));
@@ -78,6 +83,38 @@ describe('POST /api/leads', () => {
     expect(mockedNotify).not.toHaveBeenCalled();
   });
 
+  it('accepts safe client diagnostic metadata without recording submitted values', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const response = await request(app)
+      .post('/api/diagnostics/form-validation')
+      .set('x-vercel-id', 'iad1::test-request')
+      .send({
+        event: 'client_validation_failed',
+        fields: [{ field: 'verticalJumpCm', code: 'too_big', valueType: 'string', valueLength: 4 }],
+        siteKeyConfigured: true,
+      });
+
+    expect(response.status).toBe(202);
+    expect(warn).toHaveBeenCalledWith('Lead form client diagnostic', expect.objectContaining({
+      requestId: 'iad1::test-request',
+      event: 'client_validation_failed',
+      fields: [{ field: 'verticalJumpCm', code: 'too_big', valueType: 'string', valueLength: 4 }],
+    }));
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('applicant@example.com');
+    warn.mockRestore();
+  });
+
+  it('rejects diagnostic payloads containing raw form values', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const response = await request(app)
+      .post('/api/diagnostics/form-validation')
+      .send({ event: 'client_validation_failed', email: 'applicant@example.com' });
+
+    expect(response.status).toBe(400);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('defaults highlightLinks to an empty array', async () => {
     await request(app).post('/api/leads').send(validLead);
     const { data } = mockedPrisma.lead.create.mock.calls[0][0];
@@ -127,8 +164,11 @@ describe('POST /api/leads', () => {
     ['a missing first name', { ...validLead, firstName: '' }],
     ['a non-positive height', { ...validLead, heightCm: -5 }],
     ['no positions', { ...validLead, positions: [] }],
+    ['an empty position item', { ...validLead, positions: ['Outside Hitter', ''] }],
+    ['a position longer than 60 characters', { ...validLead, positions: ['P'.repeat(61)] }],
     ['a non-URL highlight link', { ...validLead, highlightLinks: ['not a url'] }],
     ['a javascript: highlight link', { ...validLead, highlightLinks: ['javascript:alert(document.cookie)'] }],
+    ['too many highlight links', { ...validLead, highlightLinks: Array.from({ length: 11 }, (_, i) => `https://example.com/${i}`) }],
     ['a missing dateOfBirth', { ...validLead, dateOfBirth: undefined }],
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
     ['a missing source', { ...validLead, source: undefined }],
@@ -136,6 +176,7 @@ describe('POST /api/leads', () => {
     ['an over-long first name', { ...validLead, firstName: 'a'.repeat(101) }],
     ['too many positions', { ...validLead, positions: Array.from({ length: 21 }, () => 'X') }],
     ['an over-long message', { ...validLead, messageToUs: 'x'.repeat(2001) }],
+    ['a vertical jump over 200cm', { ...validLead, verticalJumpCm: 201 }],
     ['consent not given', { ...validLead, consentToContact: false }],
     ['missing consent', { ...validLead, consentToContact: undefined }],
     ['an unknown preferredLanguage', { ...validLead, preferredLanguage: 'PT' }],

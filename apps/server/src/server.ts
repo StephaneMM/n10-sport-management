@@ -5,6 +5,7 @@ import { env } from './config/env';
 import { authRouter } from './features/auth/auth.routes';
 import { profileRouter } from './features/profile/profile.routes';
 import { leadRouter } from './features/leads/lead.routes';
+import { diagnosticsRouter } from './features/diagnostics/diagnostics.routes';
 import { apiLimiter } from './middlewares/rateLimit';
 import { errorHandler } from './middlewares/errorHandler';
 
@@ -34,6 +35,8 @@ app.get('/health', (req, res) => {
 app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRouter);
+
+app.use('/api/diagnostics', diagnosticsRouter);
 
 app.use('/api/profiles', profileRouter);
 

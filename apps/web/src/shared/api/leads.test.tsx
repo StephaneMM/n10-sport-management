@@ -103,6 +103,21 @@ describe("leadFormSchema", () => {
     expect(leadFormSchema.safeParse(validFormValues).success).toBe(true);
   });
 
+  it.each([
+    ["more than 20 positions", { positions: Array.from({ length: 21 }, () => "Position").join(", ") }],
+    ["a position over 60 characters", { positions: "P".repeat(61) }],
+    ["an invalid highlight link", { highlightLinks: "not a URL" }],
+    ["a non-http highlight link", { highlightLinks: "javascript:alert(1)" }],
+    ["a highlight link over 500 characters", { highlightLinks: `https://example.com/${"a".repeat(500)}` }],
+    ["more than 10 highlight links", { highlightLinks: Array.from({ length: 11 }, (_, i) => `https://example.com/${i}`).join(",") }],
+    ["a vertical jump over 200cm", { verticalJumpCm: "201" }],
+    ["a message over 2000 characters", { messageToUs: "x".repeat(2001) }],
+    ["a first name over 100 characters", { firstName: "A".repeat(101) }],
+    ["an unknown source", { source: "WORD_OF_MOUTH" }],
+  ])("rejects %s before submission", (_label, overrides) => {
+    expect(leadFormSchema.safeParse({ ...validFormValues, ...overrides }).success).toBe(false);
+  });
+
   it("requires a source", () => {
     expect(leadFormSchema.safeParse({ ...validFormValues, source: "" }).success).toBe(false);
   });
@@ -140,8 +155,34 @@ describe("useSubmitLead", () => {
     expect(options?.body).toMatchObject({
       dateOfBirth: "2008-05-14",
       positions: ["Outside Hitter", "Opposite"],
+      highlightLinks: [],
       heightCm: 182,
       preferredLanguage: "FR",
+    });
+    expect(options?.body).toHaveProperty("verticalJumpCm", undefined);
+  });
+
+  it("drops blank comma-separated position entries before POSTing", async () => {
+    mockApiClient.mockResolvedValue({ id: "lead-1" });
+
+    const { result } = renderHook(() => useSubmitLead(), { wrapper });
+    result.current.mutate({ ...validFormValues, positions: "Outside Hitter, , Opposite," });
+
+    await waitFor(() => expect(mockApiClient).toHaveBeenCalled());
+    const [, options] = mockApiClient.mock.calls[0];
+    expect(options?.body).toMatchObject({ positions: ["Outside Hitter", "Opposite"] });
+  });
+
+  it("trims and converts comma-separated highlight links before POSTing", async () => {
+    mockApiClient.mockResolvedValue({ id: "lead-1" });
+
+    const { result } = renderHook(() => useSubmitLead(), { wrapper });
+    result.current.mutate({ ...validFormValues, highlightLinks: " https://example.com/a , https://example.com/b " });
+
+    await waitFor(() => expect(mockApiClient).toHaveBeenCalled());
+    const [, options] = mockApiClient.mock.calls[0];
+    expect(options?.body).toMatchObject({
+      highlightLinks: ["https://example.com/a", "https://example.com/b"],
     });
   });
 });

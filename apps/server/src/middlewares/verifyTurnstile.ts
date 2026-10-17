@@ -29,6 +29,10 @@ export async function verifyTurnstile(
 
   const token = (req.body as { turnstileToken?: unknown }).turnstileToken;
   if (typeof token !== 'string' || token.length === 0) {
+    console.warn('Lead Turnstile verification failed', {
+      requestId: req.get('x-vercel-id') ?? req.get('x-request-id'),
+      reason: 'missing_token',
+    });
     throw new HttpError(403, 'Bot check failed. Please retry.');
   }
 
@@ -39,12 +43,21 @@ export async function verifyTurnstile(
   try {
     const response = await fetch(SITEVERIFY_URL, { method: 'POST', body: params });
     outcome = (await response.json()) as SiteverifyResponse;
-  } catch {
+  } catch (error) {
     // Cloudflare unreachable — fail closed rather than wave the request through.
+    console.error('Lead Turnstile verification unavailable', {
+      requestId: req.get('x-vercel-id') ?? req.get('x-request-id'),
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
     throw new HttpError(503, 'Bot check is temporarily unavailable. Please retry.');
   }
 
   if (!outcome.success) {
+    console.warn('Lead Turnstile verification failed', {
+      requestId: req.get('x-vercel-id') ?? req.get('x-request-id'),
+      reason: 'siteverify_rejected',
+      errorCodes: outcome['error-codes']?.slice(0, 10),
+    });
     throw new HttpError(403, 'Bot check failed. Please retry.');
   }
 
