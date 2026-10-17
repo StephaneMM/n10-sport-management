@@ -459,6 +459,22 @@ function Field({
               type={type}
               placeholder={placeholder}
               value={field.value ?? ""}
+              min={type === "number" ? 0 : undefined}
+              onKeyDown={type === "number" ? (event) => {
+                if (event.key === "-" || event.key === "e" || event.key === "E") {
+                  event.preventDefault();
+                }
+              } : undefined}
+              onChange={type === "number" ? (event) => {
+                const rawValue = event.currentTarget.value;
+                if (rawValue === "") {
+                  field.onChange("");
+                  return;
+                }
+
+                const numericValue = Number(rawValue);
+                field.onChange(Number.isFinite(numericValue) ? Math.max(0, numericValue) : "");
+              } : field.onChange}
               className="bg-navy-light border-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/30"
             />
           </FormControl>
