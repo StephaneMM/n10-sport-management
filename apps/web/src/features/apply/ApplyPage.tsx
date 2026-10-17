@@ -51,6 +51,15 @@ const ApplyPage = () => {
         form.reset();
         setSubmitted(true);
       },
+      onError: () => {
+        // Turnstile tokens are single-use. The API verifies one before lead
+        // validation, so even a 400 consumes it and a retry needs a new token.
+        if (TURNSTILE_SITE_KEY) {
+          form.setValue("turnstileToken", "");
+          setTurnstileError(false);
+          setTurnstileAttempt((attempt) => attempt + 1);
+        }
+      },
     });
   };
 
