@@ -3,7 +3,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { useLeads, useLead, useSubmitLead, useUpdateLead } from "./leads";
+import {
+  getSubmissionErrorTranslationKey,
+  useLeads,
+  useLead,
+  useSubmitLead,
+  useUpdateLead,
+} from "./leads";
 import { ApiError } from "./client";
 import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 
@@ -227,6 +233,29 @@ describe("useSubmitLead", () => {
     expect(options?.body).toMatchObject({
       highlightLinks: ["https://example.com/a", "https://example.com/b"],
     });
+  });
+});
+
+describe("getSubmissionErrorTranslationKey", () => {
+  it("keeps API validation details out of the user-facing message", () => {
+    expect(getSubmissionErrorTranslationKey(new ApiError(400, "Zod details"))).toBe(
+      "submission_validation_error",
+    );
+  });
+
+  it("uses a security message for rejected bot checks", () => {
+    expect(getSubmissionErrorTranslationKey(new ApiError(403, "Turnstile details"))).toBe(
+      "submission_security_error",
+    );
+  });
+
+  it("uses a generic message for network and server failures", () => {
+    expect(getSubmissionErrorTranslationKey(new Error("database details"))).toBe(
+      "submission_unavailable",
+    );
+    expect(getSubmissionErrorTranslationKey(new ApiError(500, "stack details"))).toBe(
+      "submission_unavailable",
+    );
   });
 });
 
