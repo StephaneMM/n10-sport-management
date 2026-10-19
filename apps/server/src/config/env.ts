@@ -79,6 +79,13 @@ const envSchema = z.object({
   // Web app the email links to for opening the lead in the admin. Differs per
   // environment, so it has no default here; unset leaves the link out.
   ADMIN_APP_URL: z.string().url().optional(),
+
+  // Sentry DSN for error monitoring & performance tracing
+  SENTRY_DSN: z
+    .string()
+    .url()
+    .optional()
+    .default('https://c05cc7177dd1472adef0635691039615@o4512275615186944.ingest.us.sentry.io/4512279264362496'),
 });
 
 export type Env = z.infer<typeof envSchema>;
