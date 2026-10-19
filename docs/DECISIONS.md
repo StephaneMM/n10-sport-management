@@ -335,7 +335,40 @@ be covered by the web/server build checks.
 
 ---
 
+## 19. Sentry for error & performance monitoring + Gemini CLI for autonomous auto-fix
+
+**Context.** Vercel's free tier keeps runtime function logs for only 1 hour. A
+production crash occurring outside active development hours had no durable
+stack trace or breadcrumbs. When incidents occurred, manual investigation,
+patching, and PR creation slowed recovery.
+
+**Decision.**
+1. Instrument `apps/server` with `@sentry/node` (imported first in `src/instrument.ts`,
+   integrated via `Sentry.setupExpressErrorHandler(app)` in `src/server.ts`, and
+   caught in `src/middlewares/errorHandler.ts`).
+2. Instrument `apps/web` with `@sentry/react` (browser tracing + session replay in
+   `src/instrument.ts`, with `<Sentry.ErrorBoundary>` wrapping the root component).
+3. Connect Sentry to GitHub via Sentry's GitHub Integration with Code Mappings
+   for `apps/server/` and `apps/web/`.
+4. Deploy an issue-driven autonomous triage agent using Google's official
+   `google-github-actions/run-gemini-cli@v1` on GitHub Actions (`.github/workflows/gemini-autofix.yml`).
+   The agent is governed by `.github/prompts/autofix-prompt.md`, which mandates a
+   non-invasive, minimal quick-fix first (to avoid regressions or chain reactions)
+   and a strict 3-part PR report (Incident Analysis, Immediate Defensive Fix, and
+   Ranked Permanent Architectural Solutions).
+5. Add an in-code crash reporter (`apps/server/src/lib/autofix/createIssue.ts`) that
+   forwards unhandled 500 crashes to GitHub Issues labeled `auto-fix` with route,
+   stack trace, and deduplication.
+
+**Consequences.** 30-day crash retention and aggregation on Sentry's free tier.
+Zero runtime overhead for the web bundle beyond standard telemetry. Gemini CLI
+wakes up automatically on `auto-fix` labeled issues to plan, verify (`pnpm -r run typecheck`),
+and open PRs without human intervention.
+
+---
+
 ## Known gaps
+
 
 Tracked here so they aren't forgotten:
 
