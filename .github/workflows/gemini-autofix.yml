@@ -1,0 +1,68 @@
+name: Gemini Autonomous Auto-Fix
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: autofix-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    name: Auto-Fix Issue
+    if: >-
+      (github.event_name == 'issues' && github.event.label.name == 'auto-fix') ||
+      (github.event_name == 'issue_comment' &&
+        (contains(github.event.comment.body, '@gemini-cli fix this issue') ||
+         contains(github.event.comment.body, '@gemini fix')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git Author Identity
+        run: |
+          git config --global user.name "gemini-autofix[bot]"
+          git config --global user.email "gemini-autofix[bot]@users.noreply.github.com"
+
+      - name: Load Auto-Fix Guidelines & PR Report Format
+        id: prompt_setup
+        shell: bash
+        run: |
+          PROMPT_FILE=".github/prompts/autofix-prompt.md"
+          if [ -f "$PROMPT_FILE" ]; then
+            echo "Loaded custom prompt instructions from $PROMPT_FILE"
+          else
+            echo "::warning ::$PROMPT_FILE not found, proceeding with default instructions."
+          fi
+
+      - name: Run Gemini Autonomous Agent
+        uses: google-github-actions/run-gemini-cli@v1
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_issue_number: ${{ github.event.issue.number }}
+          prompt: |
+            You are triggered to fix issue #${{ github.event.issue.number }}: "${{ github.event.issue.title }}".
+
+            ### Issue Details & Context:
+            ${{ github.event.issue.body }}
+
+            ### Instructions:
+            Please read and strictly abide by the rules, non-invasive fix constraints, and PR description template in `.github/prompts/autofix-prompt.md`.
+            1. Diagnose the issue and apply the most non-invasive minimal fix.
+            2. Verify the monorepo builds and passes typechecking (`pnpm -r run typecheck`).
+            3. Open a Pull Request referencing issue #${{ github.event.issue.number }} with the 3-section structured report (What Happened, Immediate Fix Applied, Permanent Architectural Solutions).
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
