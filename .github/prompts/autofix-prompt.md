@@ -78,3 +78,4 @@ Ranked approaches to solve the underlying problem permanently:
 4. Verify changes with the repository's verification tools (`pnpm -r run typecheck`).
 5. Create a new branch (e.g., `fix/issue-<ISSUE_NUMBER>`), commit the changes, and open a Pull Request targeting `main`.
 6. Use the 3-section report format above as the PR body, including `Fixes #<ISSUE_NUMBER>`.
+

@@ -95,3 +95,4 @@ ${stack}
     console.error('[autofix] Unexpected error while calling GitHub API:', apiErr);
   }
 }
+
