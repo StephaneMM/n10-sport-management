@@ -2,6 +2,7 @@ import { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { HttpError } from '../lib/httpError';
+import { reportAutoFixIssue } from '../lib/autofix/createIssue';
 
 /**
  * Terminal error handler — the single place in the app that writes an error
@@ -83,8 +84,15 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     message: err instanceof Error ? err.message : String(err),
     stack: err instanceof Error ? err.stack : undefined,
   });
+
+  // Report to GitHub as auto-fix issue if configured
+  void reportAutoFixIssue({ err, req }).catch((reportErr) => {
+    console.error('[autofix] Failed to report crash to GitHub:', reportErr);
+  });
+
   res.status(500).json({ error: 'Internal server error' });
 };
+
 
 const LEAD_INPUT_FIELDS = new Set([
   'firstName', 'lastName', 'email', 'phone', 'country', 'dateOfBirth', 'nationality',
