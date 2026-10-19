@@ -46,6 +46,8 @@ Set environment variables (Production):
 | `CORS_ORIGINS` | your web URL, e.g. `https://n10-web.vercel.app` (add it after step 4) |
 | `RESEND_API_KEY` | turns on the new-lead email (see below) — **Production only** |
 | `ADMIN_APP_URL` | `https://www.n10-sportsmanagement.com` — the email links to the lead there |
+| `SENTRY_DSN` | Sentry DSN for backend runtime crash & performance monitoring |
+| `AUTOFIX_GITHUB_TOKEN` | (Optional) GitHub token with `issues:write` to auto-create issues on unhandled 500 crashes |
 
 **New-lead email.** Each submission is emailed to `n10.sportsmanagement@gmail.com`
 from `notifications@n10-sportsmanagement.com`, with Reply going to the applicant.
@@ -67,7 +69,13 @@ Edit `apps/web/vercel.json` → replace `REPLACE-WITH-API-DEPLOYMENT.vercel.app`
 with the api URL from step 3, commit, push.
 
 New Project → import this repo → **Root Directory: `apps/web`** (Vercel detects
-Vite). No env vars needed. Deploy.
+Vite). Set environment variables (Production):
+
+| Var | Value |
+|---|---|
+| `VITE_SENTRY_DSN` | Sentry DSN for React web runtime error & session replay monitoring |
+
+Deploy.
 
 Then go back to the api project and set `CORS_ORIGINS` to the web URL, redeploy.
 
@@ -76,6 +84,12 @@ Then go back to the api project and set `CORS_ORIGINS` to the web URL, redeploy.
 - open the web URL → landing page
 - `/apply` → submit the form → "Thank you" → the email arrives in the N10 inbox
 - `/admin/login` → the seeded admin → the submission is in the table
+
+## 6. Error Monitoring & Autonomous Auto-Fix
+
+- **Sentry Integration:** Both `apps/server` and `apps/web` are instrumented with Sentry (`@sentry/node` and `@sentry/react`). Sentry captures exceptions, breadcrumbs, and performance traces with 30-day retention.
+- **Autonomous Auto-Fix Agent:** Powered by `google-github-actions/run-gemini-cli@v1` and `.github/workflows/gemini-autofix.yml`. Whenever a GitHub Issue is labeled `auto-fix` (or receives a comment with `@gemini-cli fix this issue`), Gemini runs in a GitHub-hosted runner, reads `.github/prompts/autofix-prompt.md`, applies a safe minimal patch, runs typechecks, and opens a Pull Request formatted with a structured 3-part incident report.
+
 
 ---
 
