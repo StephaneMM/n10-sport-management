@@ -1,17 +1,18 @@
 import type { Request } from 'express';
 
 /**
- * Helper to report backend crashes to GitHub as Issues labeled 'crash-report'.
+ * Helper to report backend crashes to GitHub as Issues labeled 'auto-fix'.
+ * This triggers the Gemini CLI Autonomous Fix workflow.
  *
- * The repo is public and the request URL / error message are attacker-influenced,
- * so issues carry only a curated shape (error name, route pattern, stack frames)
- * and are never labeled 'auto-fix' here. A maintainer reviews the issue and adds
- * 'auto-fix' to hand it to the Gemini workflow. Full details live in Sentry.
+ * The agent starts without a human in the loop, so the issue carries only text
+ * no visitor can influence: error name/code, route pattern, stack frames and the
+ * Sentry event id. The URL and error message stay in Sentry. The issue is locked
+ * so outsiders can't add comments the agent might read.
  */
 
-const CRASH_LABEL = 'crash-report';
-// Stop opening new issues once this many crash reports are open (spam/cost brake).
-const MAX_OPEN_CRASH_ISSUES = 20;
+const AUTOFIX_LABEL = 'auto-fix';
+// Stop opening new issues once this many are open (spam / Gemini quota brake).
+const MAX_OPEN_AUTOFIX_ISSUES = 20;
 
 interface ReportCrashParams {
   err: unknown;
@@ -48,7 +49,7 @@ export async function reportAutoFixIssue({ err, req, sentryEventId }: ReportCras
           .join('\n')
       : '';
 
-  const title = `[Crash] [server] ${errorName}${errorCode ? ` (${errorCode})` : ''} in ${route}`;
+  const title = `[Auto-Fix] [server] ${errorName}${errorCode ? ` (${errorCode})` : ''} in ${route}`;
 
   const issueBody = `### 🚨 Backend Crash Caught by Express Error Handler
 
@@ -65,7 +66,7 @@ ${frames || 'No stack frames available'}
 The error message is omitted on purpose (it can contain request data); see the Sentry event.
 
 ---
-*Created automatically by the Express \`errorHandler\`. A maintainer adds the \`auto-fix\` label to hand it to \`@gemini-cli\`.*
+*Created automatically by the Express \`errorHandler\` for autonomous resolution by \`@gemini-cli\`.*
 `;
 
   try {
@@ -77,7 +78,7 @@ The error message is omitted on purpose (it can contain request data); see the S
     };
 
     // 1. Check for existing open issue with the same title to prevent spamming
-    const searchUrl = `https://api.github.com/repos/${repo}/issues?state=open&labels=${CRASH_LABEL}&per_page=100`;
+    const searchUrl = `https://api.github.com/repos/${repo}/issues?state=open&labels=${AUTOFIX_LABEL}&per_page=100`;
     const checkRes = await fetch(searchUrl, { headers });
 
     if (checkRes.ok) {
@@ -96,26 +97,33 @@ The error message is omitted on purpose (it can contain request data); see the S
         return;
       }
 
-      if (existingIssues.length >= MAX_OPEN_CRASH_ISSUES) {
-        console.warn(`[autofix] ${existingIssues.length} open crash reports; not opening another.`);
+      if (existingIssues.length >= MAX_OPEN_AUTOFIX_ISSUES) {
+        console.warn(`[autofix] ${existingIssues.length} open auto-fix issues; not opening another.`);
         return;
       }
     }
 
-    // 2. Create new GitHub Issue labeled 'crash-report' (not 'auto-fix': a human triggers the agent)
+    // 2. Create new GitHub Issue labeled 'auto-fix'
     const createRes = await fetch(`https://api.github.com/repos/${repo}/issues`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         title,
         body: issueBody,
-        labels: [CRASH_LABEL, 'bug'],
+        labels: [AUTOFIX_LABEL, 'bug'],
       }),
     });
 
     if (createRes.ok) {
       const created = (await createRes.json()) as { number: number; html_url: string };
-      console.info(`[autofix] Successfully created crash-report issue #${created.number}: ${created.html_url}`);
+      console.info(`[autofix] Successfully created auto-fix issue #${created.number}: ${created.html_url}`);
+
+      // 3. Lock it: collaborators (and this token) can still comment, outsiders can't.
+      await fetch(`https://api.github.com/repos/${repo}/issues/${created.number}/lock`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ lock_reason: 'resolved' }),
+      });
     } else {
       const errText = await createRes.text();
       console.warn(`[autofix] GitHub API error (${createRes.status}): ${errText}`);
@@ -127,10 +135,11 @@ The error message is omitted on purpose (it can contain request data); see the S
 
 /**
  * "POST /api/leads/:id" rather than the concrete URL, so the title (the dedup key)
- * can't be varied with ids or query strings.
+ * can't be varied with ids or query strings, and no visitor-chosen path reaches the
+ * agent. Crashes before routing (global middleware) are located by the stack frames.
  */
 function routePattern(req?: Request): string {
   if (!req) return 'unknown-route';
-  const path = req.route?.path ? `${req.baseUrl}${String(req.route.path)}` : req.path;
-  return `${req.method} ${path.slice(0, 100)}`;
+  if (!req.route?.path) return `${req.method} (before routing)`;
+  return `${req.method} ${req.baseUrl}${String(req.route.path)}`;
 }

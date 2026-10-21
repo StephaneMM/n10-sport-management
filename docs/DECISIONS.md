@@ -357,17 +357,30 @@ patching, and PR creation slowed recovery.
    and a strict 3-part PR report (Incident Analysis, Immediate Defensive Fix, and
    Ranked Permanent Architectural Solutions).
 5. Add an in-code crash reporter (`apps/server/src/lib/autofix/createIssue.ts`) that
-   forwards unhandled 500 crashes to GitHub Issues labeled `crash-report` with the
-   route pattern, error name/code, stack frames, Sentry event id, and deduplication.
-   Error messages are left out (they can carry request data), and the reporter never
-   applies `auto-fix` itself: the URL and error text are attacker-influenced on a
-   public repo, so a maintainer adds the label after review. The workflow also only
-   accepts `@gemini` comments from OWNER/MEMBER/COLLABORATOR.
+   forwards unhandled 500 crashes to GitHub Issues labeled `auto-fix` with the route
+   pattern, error name/code, stack frames, Sentry event id, and deduplication (capped
+   at 20 open issues), then locks the issue.
+6. Fully automated up to the PR, human at merge. Because the agent starts without
+   anyone reviewing the issue, safety comes from limiting what it can see and do
+   rather than from a manual trigger:
+   - Issues contain no visitor-controlled text (no URL, no error message: those stay
+     in Sentry), and locking keeps outsiders from adding comments. `@gemini` comments
+     are only accepted from OWNER/MEMBER/COLLABORATOR.
+   - `run-gemini-cli` runs Gemini with `--yolo`, so the agent gets file tools only
+     (`tools.core`): no shell, no web access, no GitHub token.
+   - The workflow, not the agent, verifies (same commands as CI), branches, commits,
+     pushes and opens the PR. Up to 3 attempts, each given the previous failure output.
+     Edits outside `apps/*/src` and `packages/lead-validation` (configs, `package.json`,
+     `.github/`, git hooks/config) fail the run.
+   - The `main` ruleset (PR + `verify` check) keeps a human merge between the agent
+     and production. CI is started with `workflow_dispatch` because pushes made with
+     `GITHUB_TOKEN` don't trigger workflows.
 
 **Consequences.** 30-day crash retention and aggregation on Sentry's free tier.
-Zero runtime overhead for the web bundle beyond standard telemetry. Gemini CLI
-wakes up on `auto-fix` labeled issues to plan, verify (`pnpm -r run typecheck`),
-and open PRs; a maintainer decides which issues get that label.
+Zero runtime overhead for the web bundle beyond standard telemetry. A production
+crash becomes a verified, ready-to-review PR without manual steps; the only human
+action is reviewing the 3-part report and merging. Runs that fail 3 times end with an
+issue comment instead of a PR, so an open auto-fix PR always passed CI's checks.
 
 ---
 

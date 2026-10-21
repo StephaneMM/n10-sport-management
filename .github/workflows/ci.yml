@@ -5,6 +5,9 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Started by gemini-autofix.yml on fix/issue-N branches: pushes made with
+  # GITHUB_TOKEN don't trigger workflows, dispatches do.
+  workflow_dispatch:
 
 # One run per ref; a new push cancels the previous, still-running one.
 concurrency:

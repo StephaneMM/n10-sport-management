@@ -85,7 +85,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     stack: err instanceof Error ? err.stack : undefined,
   });
 
-  // Report to GitHub as a crash-report issue if configured. Sentry's error
+  // Report to GitHub as an auto-fix issue if configured. Sentry's error
   // handler (registered earlier) stores its event id on `res.sentry`.
   void reportAutoFixIssue({ err, req, sentryEventId: (res as { sentry?: string }).sentry }).catch(
     (reportErr) => {

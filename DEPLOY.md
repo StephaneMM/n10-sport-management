@@ -47,7 +47,7 @@ Set environment variables (Production):
 | `RESEND_API_KEY` | turns on the new-lead email (see below) — **Production only** |
 | `ADMIN_APP_URL` | `https://www.n10-sportsmanagement.com` — the email links to the lead there |
 | `SENTRY_DSN` | Sentry DSN for backend runtime crash & performance monitoring |
-| `AUTOFIX_GITHUB_TOKEN` | (Optional) GitHub token with `issues:write` to auto-create issues on unhandled 500 crashes |
+| `AUTOFIX_GITHUB_TOKEN` | (Optional) Fine-grained GitHub token for this repo with Issues read/write, to auto-create `auto-fix` issues on unhandled 500 crashes |
 
 **New-lead email.** Each submission is emailed to `n10.sportsmanagement@gmail.com`
 from `notifications@n10-sportsmanagement.com`, with Reply going to the applicant.
@@ -88,7 +88,9 @@ Then go back to the api project and set `CORS_ORIGINS` to the web URL, redeploy.
 ## 6. Error Monitoring & Autonomous Auto-Fix
 
 - **Sentry Integration:** Both `apps/server` and `apps/web` are instrumented with Sentry (`@sentry/node` and `@sentry/react`). Sentry captures exceptions, breadcrumbs, and performance traces with 30-day retention.
-- **Autonomous Auto-Fix Agent:** Powered by `google-github-actions/run-gemini-cli@v1` and `.github/workflows/gemini-autofix.yml`. Whenever a GitHub Issue is labeled `auto-fix` (or a maintainer comments `@gemini-cli fix this issue`), Gemini runs in a GitHub-hosted runner, reads `.github/prompts/autofix-prompt.md`, applies a safe minimal patch, runs typechecks, and opens a Pull Request formatted with a structured 3-part incident report.
+- **Autonomous Auto-Fix Agent:** Powered by `google-github-actions/run-gemini-cli` and `.github/workflows/gemini-autofix.yml`. Whenever a GitHub Issue is labeled `auto-fix` (or a maintainer comments `@gemini-cli fix this issue`), Gemini patches the code following `.github/prompts/autofix-prompt.md`; the workflow runs typecheck/lint/test/build (up to 3 attempts, feeding failures back), then opens a ready PR on `fix/issue-N` with the 3-part incident report and starts CI on it. You review and merge.
+  - **Setup:** add `GEMINI_API_KEY` (Google AI Studio) under GitHub → Settings → Secrets and variables → Actions; optionally set the `GEMINI_MODEL` variable. Set `AUTOFIX_GITHUB_TOKEN` on the API Vercel project to turn crash → issue on.
+  - **Tune the agent** by editing `.github/prompts/autofix-prompt.md`; no YAML changes needed.
 
 
 ---

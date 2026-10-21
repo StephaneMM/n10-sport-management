@@ -94,11 +94,12 @@ is missing, too weak, or still a placeholder. See
 `main` is protected: every change goes through a branch → PR → green CI →
 squash-merge. `main` auto-deploys to production (web + API Vercel projects).
 
-**Autonomous bug fixing:** GitHub Issues labeled `auto-fix` (or maintainer comments containing
-`@gemini-cli fix this issue`) trigger the Gemini CLI workflow (`.github/workflows/gemini-autofix.yml`).
-Server crash reports arrive labeled `crash-report`; a maintainer reviews them and adds `auto-fix`.
-The agent reads rules from `.github/prompts/autofix-prompt.md`, creates a focused branch,
-applies a non-invasive defensive patch, verifies typechecks, and opens a structured PR.
+**Autonomous bug fixing:** an unhandled 500 on the API opens a GitHub Issue labeled `auto-fix`,
+which starts the Gemini CLI workflow (`.github/workflows/gemini-autofix.yml`); a maintainer
+comment containing `@gemini-cli fix this issue` does the same for any issue. Gemini applies a
+minimal patch following `.github/prompts/autofix-prompt.md`; the workflow verifies it with the
+CI commands (up to 3 attempts, feeding failures back) and opens a ready PR on `fix/issue-N`.
+You review the report and merge.
 
 Database migrations are **not** automated — after a migration merges, run
 `prisma migrate deploy` against the production Neon branch (see `DECISIONS.md`).

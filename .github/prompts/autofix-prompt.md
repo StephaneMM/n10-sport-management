@@ -30,10 +30,13 @@ Your primary goals are:
    - Verify that your changes do not break existing callers across apps and packages.
 
 3. **Verification**:
-   - Run type checks and tests before finalizing:
-     - Root: `pnpm -r run typecheck`
-     - Or filtered: `pnpm --filter server run typecheck` / `pnpm --filter web run typecheck`
-   - Ensure the project builds cleanly (`pnpm -r run build`).
+   - You cannot run commands. When you finish, the workflow runs the same checks as CI:
+     `pnpm -r run typecheck`, `pnpm -r run lint`, `pnpm -r run test`, `pnpm -r run build`.
+   - If any of them fail, you get the failure output and another attempt (3 attempts in total),
+     so read the relevant types, callers, and existing tests carefully before editing.
+   - Only edit source files under `apps/server/src`, `apps/web/src`, or `packages/lead-validation`.
+     Changes to `package.json`, lockfiles, configs, or `.github/` make the run fail.
+   - You may add or update tests next to the code you change, but never weaken existing ones.
 
 ---
 
@@ -50,7 +53,7 @@ Every Pull Request opened by this workflow MUST strictly adhere to the following
 ## 2. 🛡️ Immediate Fix Applied
 - **Defensive Patch Summary**: Detailed walkthrough of the exact minimal lines changed.
 - **Why It Is Non-Invasive**: Explanation of why this fix is safe, isolated, and will not cause regressions or chain reactions in downstream code.
-- **Verification**: Commands executed (e.g., typecheck, unit tests) and verification results.
+- **Verification**: Which tests cover the change, and any test you added. (The workflow appends the actual typecheck/lint/test/build results.)
 
 ## 3. 🏗️ Permanent Solutions & Architectural Approaches
 Ranked approaches to solve the underlying problem permanently:
@@ -75,7 +78,7 @@ Ranked approaches to solve the underlying problem permanently:
 1. Review the issue title, description, stack trace, and error context.
 2. Identify the relevant package/app (`apps/server` or `apps/web`) and pinpoint the exact source of failure.
 3. Apply the minimal defensive fix.
-4. Verify changes with the repository's verification tools (`pnpm -r run typecheck`).
-5. Create a new branch (e.g., `fix/issue-<ISSUE_NUMBER>`), commit the changes, and open a Pull Request targeting `main`.
-6. Use the 3-section report format above as the PR body, including `Fixes #<ISSUE_NUMBER>`.
+4. Write the 3-section report above to `autofix-pr-body.md` at the repository root (overwrite it on later attempts).
+5. Stop. The workflow verifies your changes, creates the `fix/issue-<ISSUE_NUMBER>` branch, commits,
+   and opens the Pull Request with your report as its body (it adds `Fixes #<ISSUE_NUMBER>` itself).
 
