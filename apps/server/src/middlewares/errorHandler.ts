@@ -85,14 +85,16 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     stack: err instanceof Error ? err.stack : undefined,
   });
 
-  // Report to GitHub as auto-fix issue if configured
-  void reportAutoFixIssue({ err, req }).catch((reportErr) => {
-    console.error('[autofix] Failed to report crash to GitHub:', reportErr);
-  });
+  // Report to GitHub as a crash-report issue if configured. Sentry's error
+  // handler (registered earlier) stores its event id on `res.sentry`.
+  void reportAutoFixIssue({ err, req, sentryEventId: (res as { sentry?: string }).sentry }).catch(
+    (reportErr) => {
+      console.error('[autofix] Failed to report crash to GitHub:', reportErr);
+    },
+  );
 
   res.status(500).json({ error: 'Internal server error' });
 };
-
 
 const LEAD_INPUT_FIELDS = new Set([
   'firstName', 'lastName', 'email', 'phone', 'country', 'dateOfBirth', 'nationality',

@@ -139,7 +139,7 @@ The production connection string never appears in a file or in git.
   build, across both packages. `main` is protected (PR + green CI required, no
   direct or force pushes).
 - `.github/workflows/gemini-autofix.yml` — autonomous agent workflow triggered
-  by issues labeled `auto-fix` or comments with `@gemini-cli fix this issue`. Runs
+  by issues labeled `auto-fix` or maintainer comments with `@gemini-cli fix this issue`. Runs
   `google-github-actions/run-gemini-cli@v1` using instructions in
   `.github/prompts/autofix-prompt.md` to apply minimal defensive fixes and open PRs
   with structured 3-part incident reports.
@@ -149,7 +149,8 @@ The production connection string never appears in a file or in git.
 - **Sentry Integration:**
   - `apps/server`: `@sentry/node` initialized in `src/instrument.ts` before all
     other imports; `Sentry.setupExpressErrorHandler(app)` is registered on the Express app,
-    and unhandled 500 exceptions in `errorHandler` trigger the `reportAutoFixIssue` helper.
+    and unhandled 500 exceptions in `errorHandler` trigger the `reportAutoFixIssue` helper,
+    which opens a `crash-report` issue for a maintainer to triage.
   - `apps/web`: `@sentry/react` initialized in `src/instrument.ts` with browser tracing
     and session replays; root application wrapped in `<Sentry.ErrorBoundary>`.
 - **GitHub Integration:** Connected via Sentry's GitHub Integration with Code Mappings

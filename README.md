@@ -94,8 +94,9 @@ is missing, too weak, or still a placeholder. See
 `main` is protected: every change goes through a branch → PR → green CI →
 squash-merge. `main` auto-deploys to production (web + API Vercel projects).
 
-**Autonomous bug fixing:** GitHub Issues labeled `auto-fix` (or comments containing
+**Autonomous bug fixing:** GitHub Issues labeled `auto-fix` (or maintainer comments containing
 `@gemini-cli fix this issue`) trigger the Gemini CLI workflow (`.github/workflows/gemini-autofix.yml`).
+Server crash reports arrive labeled `crash-report`; a maintainer reviews them and adds `auto-fix`.
 The agent reads rules from `.github/prompts/autofix-prompt.md`, creates a focused branch,
 applies a non-invasive defensive patch, verifies typechecks, and opens a structured PR.
 

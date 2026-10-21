@@ -357,13 +357,17 @@ patching, and PR creation slowed recovery.
    and a strict 3-part PR report (Incident Analysis, Immediate Defensive Fix, and
    Ranked Permanent Architectural Solutions).
 5. Add an in-code crash reporter (`apps/server/src/lib/autofix/createIssue.ts`) that
-   forwards unhandled 500 crashes to GitHub Issues labeled `auto-fix` with route,
-   stack trace, and deduplication.
+   forwards unhandled 500 crashes to GitHub Issues labeled `crash-report` with the
+   route pattern, error name/code, stack frames, Sentry event id, and deduplication.
+   Error messages are left out (they can carry request data), and the reporter never
+   applies `auto-fix` itself: the URL and error text are attacker-influenced on a
+   public repo, so a maintainer adds the label after review. The workflow also only
+   accepts `@gemini` comments from OWNER/MEMBER/COLLABORATOR.
 
 **Consequences.** 30-day crash retention and aggregation on Sentry's free tier.
 Zero runtime overhead for the web bundle beyond standard telemetry. Gemini CLI
-wakes up automatically on `auto-fix` labeled issues to plan, verify (`pnpm -r run typecheck`),
-and open PRs without human intervention.
+wakes up on `auto-fix` labeled issues to plan, verify (`pnpm -r run typecheck`),
+and open PRs; a maintainer decides which issues get that label.
 
 ---
 

@@ -88,7 +88,7 @@ Then go back to the api project and set `CORS_ORIGINS` to the web URL, redeploy.
 ## 6. Error Monitoring & Autonomous Auto-Fix
 
 - **Sentry Integration:** Both `apps/server` and `apps/web` are instrumented with Sentry (`@sentry/node` and `@sentry/react`). Sentry captures exceptions, breadcrumbs, and performance traces with 30-day retention.
-- **Autonomous Auto-Fix Agent:** Powered by `google-github-actions/run-gemini-cli@v1` and `.github/workflows/gemini-autofix.yml`. Whenever a GitHub Issue is labeled `auto-fix` (or receives a comment with `@gemini-cli fix this issue`), Gemini runs in a GitHub-hosted runner, reads `.github/prompts/autofix-prompt.md`, applies a safe minimal patch, runs typechecks, and opens a Pull Request formatted with a structured 3-part incident report.
+- **Autonomous Auto-Fix Agent:** Powered by `google-github-actions/run-gemini-cli@v1` and `.github/workflows/gemini-autofix.yml`. Whenever a GitHub Issue is labeled `auto-fix` (or a maintainer comments `@gemini-cli fix this issue`), Gemini runs in a GitHub-hosted runner, reads `.github/prompts/autofix-prompt.md`, applies a safe minimal patch, runs typechecks, and opens a Pull Request formatted with a structured 3-part incident report.
 
 
 ---
