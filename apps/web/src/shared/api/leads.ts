@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { apiClient } from "./client";
+import { ApiError, apiClient } from "./client";
 import {
   Lead,
   LeadFormValues,
@@ -27,8 +27,18 @@ export function toLocaleEnum(language: string): (typeof LOCALES)[number] {
     : "EN";
 }
 
+export function getSubmissionErrorTranslationKey(error: unknown):
+  | "submission_validation_error"
+  | "submission_security_error"
+  | "submission_unavailable" {
+  if (!(error instanceof ApiError)) return "submission_unavailable";
+  if (error.status === 400) return "submission_validation_error";
+  if (error.status === 403) return "submission_security_error";
+  return "submission_unavailable";
+}
+
 export function useSubmitLead() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   return useMutation({
     mutationFn: (data: LeadFormValues) => {
       const verticalJumpCm =
@@ -71,14 +81,14 @@ export function useSubmitLead() {
     },
     onSuccess: () => {
       toast({
-        title: "Application submitted successfully!",
-        description: "We'll be in touch soon.",
+        title: t("apply.submission_success_title"),
+        description: t("apply.submission_success_message"),
       });
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
       toast({
-        title: "Submission failed",
-        description: error.message,
+        title: t("apply.submission_failed_title"),
+        description: t(`apply.${getSubmissionErrorTranslationKey(error)}`),
         variant: "destructive",
       });
     },

@@ -1,61 +1,112 @@
 import { z } from 'zod';
 import { LeadStatus, LeadSource, Locale } from '@prisma/client';
+import { LEAD_LIMITS } from '@n10/lead-validation';
 import { httpUrl } from '../../lib/urlSchema';
 
 /** Whole years between `dob` and `on`. */
 export function ageInYears(dob: Date, on: Date = new Date()): number {
-  let age = on.getFullYear() - dob.getFullYear();
-  const monthDelta = on.getMonth() - dob.getMonth();
-  if (monthDelta < 0 || (monthDelta === 0 && on.getDate() < dob.getDate())) {
+  let age = on.getUTCFullYear() - dob.getUTCFullYear();
+  const monthDelta = on.getUTCMonth() - dob.getUTCMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && on.getUTCDate() < dob.getUTCDate())) {
     age -= 1;
   }
   return age;
 }
 
-export const MINOR_AGE = 18;
+export const MINOR_AGE = LEAD_LIMITS.minorAge;
 
 const shortText = (label: string, max = 120) =>
-  z.string().min(1, `${label} is required`).max(max, `${label} is too long`);
+  z.string().trim().min(1, `${label} is required`).max(max, `${label} is too long`);
+
+const optionalText = (max: number) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' ? value.trim() || undefined : value),
+    z.string().max(max).optional(),
+  );
+
+const optionalEmail = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim().toLowerCase() || undefined : value),
+  z.string().email('Invalid guardian email').max(254).optional(),
+);
+
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MIN_DATE_OF_BIRTH = new Date(Date.UTC(LEAD_LIMITS.minDateOfBirthYear, 0, 1));
+
+export function isValidIsoDate(value: string): boolean {
+  if (!ISO_DATE_PATTERN.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+function isoDateToUtcDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+const dateOfBirth = z
+  .string()
+  .regex(ISO_DATE_PATTERN, 'Date of birth must use the YYYY-MM-DD format')
+  .refine(isValidIsoDate, 'Date of birth is not valid')
+  .transform(isoDateToUtcDate)
+  .refine((value) => value >= MIN_DATE_OF_BIRTH, 'Date of birth is not valid')
+  .refine((value) => value <= new Date(), 'Date of birth must be in the past');
+
+const normalizedHttpUrl = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim() : value),
+  httpUrl,
+);
 
 const createLeadBody = z
   .object({
-    firstName: shortText("First name", 100),
-    lastName: shortText("Last name", 100),
+    firstName: shortText('First name', LEAD_LIMITS.firstName),
+    lastName: shortText('Last name', LEAD_LIMITS.lastName),
     email: z.string().trim().toLowerCase().email("Invalid email address").max(254),
-    phone: shortText("Phone number", 32),
-    country: shortText("Country", 100),
+    phone: shortText('Phone number', LEAD_LIMITS.phone),
+    country: shortText('Country', LEAD_LIMITS.country),
 
-    dateOfBirth: z.coerce
-      .date()
-      .min(new Date('1940-01-01'), "Date of birth is not valid")
-      .max(new Date(), "Date of birth must be in the past"),
-    nationality: shortText("Nationality", 100),
-    gender: shortText("Gender", 32),
-    sport: shortText("Sport", 64),
+    dateOfBirth,
+    nationality: shortText('Nationality', LEAD_LIMITS.nationality),
+    gender: shortText('Gender', LEAD_LIMITS.gender),
+    sport: shortText('Sport', LEAD_LIMITS.sport),
     positions: z
-      .array(z.string().min(1).max(60))
+      .array(z.string().trim().min(1).max(LEAD_LIMITS.position))
       .min(1, "At least one position is required")
-      .max(20, "Too many positions"),
+      .max(LEAD_LIMITS.maxPositions, "Too many positions"),
 
-    heightCm: z.number().positive("Height must be positive").max(300),
-    weightKg: z.number().positive("Weight must be positive").max(500),
-    verticalJumpCm: z.number().positive().max(200).optional(),
+    heightCm: z
+      .number()
+      .min(LEAD_LIMITS.heightCm.min, `Height must be at least ${LEAD_LIMITS.heightCm.min}cm`)
+      .max(LEAD_LIMITS.heightCm.max, `Height must be under ${LEAD_LIMITS.heightCm.max}cm`),
+    weightKg: z
+      .number()
+      .min(LEAD_LIMITS.weightKg.min, `Weight must be at least ${LEAD_LIMITS.weightKg.min}kg`)
+      .max(LEAD_LIMITS.weightKg.max, `Weight must be under ${LEAD_LIMITS.weightKg.max}kg`),
+    verticalJumpCm: z.number().positive().max(LEAD_LIMITS.verticalJumpCm.max).optional(),
 
-    league: z.string().max(120).optional(),
-    currentClub: z.string().max(120).optional(),
-    highlightLinks: z.array(httpUrl).max(10, "Too many links").optional().default([]),
+    league: optionalText(LEAD_LIMITS.league),
+    currentClub: optionalText(LEAD_LIMITS.currentClub),
+    highlightLinks: z
+      .array(normalizedHttpUrl)
+      .max(LEAD_LIMITS.maxHighlightLinks, "Too many links")
+      .optional()
+      .default([]),
 
-    messageToUs: z.string().max(2000, "Message is too long").optional(),
+    messageToUs: optionalText(LEAD_LIMITS.messageToUs),
     source: z.nativeEnum(LeadSource),
     preferredLanguage: z.nativeEnum(Locale).optional(),
     consentToContact: z.literal(true, {
       errorMap: () => ({ message: "You must agree to be contacted" }),
     }),
 
-    guardianName: z.string().trim().min(1).max(100).optional(),
-    guardianEmail: z.string().trim().toLowerCase().email("Invalid guardian email").max(254).optional(),
-    guardianPhone: z.string().trim().min(1).max(32).optional(),
-    guardianRelationship: z.string().trim().min(1).max(60).optional(),
+    guardianName: optionalText(LEAD_LIMITS.guardianName),
+    guardianEmail: optionalEmail,
+    guardianPhone: optionalText(LEAD_LIMITS.guardianPhone),
+    guardianRelationship: optionalText(LEAD_LIMITS.guardianRelationship),
     // NOTE: the request also carries `turnstileToken`, consumed by the
     // verifyTurnstile middleware before this schema runs and stripped here.
   })

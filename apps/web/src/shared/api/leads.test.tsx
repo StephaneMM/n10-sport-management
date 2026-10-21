@@ -3,7 +3,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { useLeads, useLead, useSubmitLead, useUpdateLead } from "./leads";
+import {
+  getSubmissionErrorTranslationKey,
+  useLeads,
+  useLead,
+  useSubmitLead,
+  useUpdateLead,
+} from "./leads";
 import { ApiError } from "./client";
 import { leadFormSchema, type LeadFormValues } from "@/shared/types/lead";
 
@@ -13,7 +19,7 @@ vi.mock("./client", async (importOriginal) => {
 });
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ i18n: { language: "fr-FR" } }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: "fr-FR" } }),
 }));
 
 import { apiClient } from "./client";
@@ -115,6 +121,10 @@ describe("leadFormSchema", () => {
   });
 
   it.each([
+    ["a height below the supported range", { heightCm: 99 }],
+    ["a height above the supported range", { heightCm: 251 }],
+    ["a weight below the supported range", { weightKg: 29 }],
+    ["a weight above the supported range", { weightKg: 201 }],
     ["more than 20 positions", { positions: Array.from({ length: 21 }, () => "Position").join(", ") }],
     ["a position over 60 characters", { positions: "P".repeat(61) }],
     ["an invalid highlight link", { highlightLinks: "not a URL" }],
@@ -150,6 +160,12 @@ describe("leadFormSchema", () => {
         guardianPhone: "+55 11 98888-0000",
       }).success,
     ).toBe(true);
+  });
+
+  it("validates guardian email whenever it is provided", () => {
+    expect(
+      leadFormSchema.safeParse({ ...validFormValues, guardianEmail: "not-an-email" }).success,
+    ).toBe(false);
   });
 });
 
@@ -217,6 +233,29 @@ describe("useSubmitLead", () => {
     expect(options?.body).toMatchObject({
       highlightLinks: ["https://example.com/a", "https://example.com/b"],
     });
+  });
+});
+
+describe("getSubmissionErrorTranslationKey", () => {
+  it("keeps API validation details out of the user-facing message", () => {
+    expect(getSubmissionErrorTranslationKey(new ApiError(400, "Zod details"))).toBe(
+      "submission_validation_error",
+    );
+  });
+
+  it("uses a security message for rejected bot checks", () => {
+    expect(getSubmissionErrorTranslationKey(new ApiError(403, "Turnstile details"))).toBe(
+      "submission_security_error",
+    );
+  });
+
+  it("uses a generic message for network and server failures", () => {
+    expect(getSubmissionErrorTranslationKey(new Error("database details"))).toBe(
+      "submission_unavailable",
+    );
+    expect(getSubmissionErrorTranslationKey(new ApiError(500, "stack details"))).toBe(
+      "submission_unavailable",
+    );
   });
 });
 

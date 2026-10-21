@@ -316,6 +316,25 @@ clean.
 
 ---
 
+## 18. Dual-module format for shared lead validation values
+
+**Context.** `@n10/lead-validation` is consumed by the Vite web app and the
+CommonJS server. Vite requires statically discoverable ES-module named exports,
+while the current `ts-node-dev` server loads workspace packages through
+CommonJS.
+
+**Decision.** Publish the small shared package with both formats: `index.mjs`
+for `import` consumers and `index.cjs` for `require` consumers. The package
+`exports` map selects the correct entry point, while `index.d.ts` remains the
+shared TypeScript contract.
+
+**Consequences.** The browser build can resolve named exports reliably and the
+server does not need to switch module systems. The two entry points must expose
+the same values; changes to the shared contract should update both files and
+be covered by the web/server build checks.
+
+---
+
 ## Known gaps
 
 Tracked here so they aren't forgotten:

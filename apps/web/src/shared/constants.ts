@@ -1,4 +1,5 @@
 /** Options shared by the public application form and the admin lead filters. */
+import { LEAD_SOURCE_VALUES } from "@n10/lead-validation";
 
 export const SPORTS = [
   "Acrobatics & Tumbling",
@@ -57,14 +58,14 @@ export const LEAD_STATUS_LABELS: Record<string, string> = Object.fromEntries(
 
 /** How a lead found us. `value` must match the server's LeadSource enum. */
 export const LEAD_SOURCES = [
-  { value: "INSTAGRAM", label: "Instagram" },
-  { value: "FACEBOOK", label: "Facebook" },
-  { value: "TIKTOK", label: "TikTok" },
-  { value: "YOUTUBE", label: "YouTube" },
-  { value: "GOOGLE_SEARCH", label: "Google / web search" },
-  { value: "REFERRAL", label: "Friend or family" },
-  { value: "COACH", label: "My coach" },
-  { value: "AGENT", label: "An agent" },
-  { value: "EVENT", label: "An event or showcase" },
-  { value: "OTHER", label: "Other" },
+  { value: LEAD_SOURCE_VALUES[0], label: "Instagram" },
+  { value: LEAD_SOURCE_VALUES[1], label: "Facebook" },
+  { value: LEAD_SOURCE_VALUES[2], label: "TikTok" },
+  { value: LEAD_SOURCE_VALUES[3], label: "YouTube" },
+  { value: LEAD_SOURCE_VALUES[4], label: "Google / web search" },
+  { value: LEAD_SOURCE_VALUES[5], label: "Friend or family" },
+  { value: LEAD_SOURCE_VALUES[6], label: "My coach" },
+  { value: LEAD_SOURCE_VALUES[7], label: "An agent" },
+  { value: LEAD_SOURCE_VALUES[8], label: "An event or showcase" },
+  { value: LEAD_SOURCE_VALUES[9], label: "Other" },
 ] as const;

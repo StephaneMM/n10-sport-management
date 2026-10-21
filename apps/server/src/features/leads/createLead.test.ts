@@ -144,6 +144,26 @@ describe('POST /api/leads', () => {
     expect(data.dateOfBirth).toEqual(new Date('2008-05-14'));
   });
 
+  it('normalizes surrounding whitespace before persistence', async () => {
+    await request(app).post('/api/leads').send({
+      ...validLead,
+      firstName: ' Ana ',
+      positions: [' Outside Hitter '],
+      highlightLinks: [' https://example.com/highlight '],
+      league: ' NCAA ',
+      messageToUs: ' Interested in learning more. ',
+    });
+
+    const { data } = mockedPrisma.lead.create.mock.calls[0][0];
+    expect(data).toMatchObject({
+      firstName: 'Ana',
+      positions: ['Outside Hitter'],
+      highlightLinks: ['https://example.com/highlight'],
+      league: 'NCAA',
+      messageToUs: 'Interested in learning more.',
+    });
+  });
+
   it('rejects a body larger than the JSON limit before parsing it', async () => {
     const response = await request(app)
       .post('/api/leads')
@@ -162,14 +182,21 @@ describe('POST /api/leads', () => {
   it.each([
     ['an invalid email', { ...validLead, email: 'not-an-email' }],
     ['a missing first name', { ...validLead, firstName: '' }],
-    ['a non-positive height', { ...validLead, heightCm: -5 }],
+    ['a whitespace-only first name', { ...validLead, firstName: '   ' }],
+    ['a height below the supported range', { ...validLead, heightCm: 99 }],
+    ['a height above the supported range', { ...validLead, heightCm: 251 }],
+    ['a weight below the supported range', { ...validLead, weightKg: 29 }],
+    ['a weight above the supported range', { ...validLead, weightKg: 201 }],
     ['no positions', { ...validLead, positions: [] }],
     ['an empty position item', { ...validLead, positions: ['Outside Hitter', ''] }],
+    ['a whitespace-only position item', { ...validLead, positions: ['   '] }],
     ['a position longer than 60 characters', { ...validLead, positions: ['P'.repeat(61)] }],
     ['a non-URL highlight link', { ...validLead, highlightLinks: ['not a url'] }],
     ['a javascript: highlight link', { ...validLead, highlightLinks: ['javascript:alert(document.cookie)'] }],
     ['too many highlight links', { ...validLead, highlightLinks: Array.from({ length: 11 }, (_, i) => `https://example.com/${i}`) }],
     ['a missing dateOfBirth', { ...validLead, dateOfBirth: undefined }],
+    ['a non-ISO dateOfBirth', { ...validLead, dateOfBirth: '05/14/2008' }],
+    ['an impossible dateOfBirth', { ...validLead, dateOfBirth: '2008-02-30' }],
     ['a future dateOfBirth', { ...validLead, dateOfBirth: '2999-01-01' }],
     ['a missing source', { ...validLead, source: undefined }],
     ['an unknown source', { ...validLead, source: 'WORD_OF_MOUTH' }],
@@ -181,6 +208,7 @@ describe('POST /api/leads', () => {
     ['missing consent', { ...validLead, consentToContact: undefined }],
     ['an unknown preferredLanguage', { ...validLead, preferredLanguage: 'PT' }],
     ['a minor without guardian contact', { ...validLead, dateOfBirth: '2012-06-15' }],
+    ['an invalid guardian email for an adult', { ...validLead, guardianEmail: 'not-an-email' }],
     [
       'a minor missing the guardian email',
       { ...validLead, dateOfBirth: '2012-06-15', guardianName: 'Rosa Silva', guardianPhone: '+55 11 8888' },
