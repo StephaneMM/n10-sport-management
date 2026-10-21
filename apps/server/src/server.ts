@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import * as Sentry from '@sentry/node';
 import { env } from './config/env';
 import { authRouter } from './features/auth/auth.routes';
 import { profileRouter } from './features/profile/profile.routes';
@@ -42,5 +43,9 @@ app.use('/api/profiles', profileRouter);
 
 app.use('/api/leads', leadRouter);
 
+// Sentry error handler must be registered before any other error middleware
+Sentry.setupExpressErrorHandler(app);
+
 // Terminal error handler — keep last.
 app.use(errorHandler);
+
