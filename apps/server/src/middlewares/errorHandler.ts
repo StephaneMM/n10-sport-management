@@ -2,6 +2,7 @@ import { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { HttpError } from '../lib/httpError';
+import { reportAutoFixIssue } from '../lib/autofix/createIssue';
 
 /**
  * Terminal error handler — the single place in the app that writes an error
@@ -83,6 +84,15 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     message: err instanceof Error ? err.message : String(err),
     stack: err instanceof Error ? err.stack : undefined,
   });
+
+  // Report to GitHub as an auto-fix issue if configured. Sentry's error
+  // handler (registered earlier) stores its event id on `res.sentry`.
+  void reportAutoFixIssue({ err, req, sentryEventId: (res as { sentry?: string }).sentry }).catch(
+    (reportErr) => {
+      console.error('[autofix] Failed to report crash to GitHub:', reportErr);
+    },
+  );
+
   res.status(500).json({ error: 'Internal server error' });
 };
 

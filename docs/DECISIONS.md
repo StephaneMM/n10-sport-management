@@ -335,7 +335,57 @@ be covered by the web/server build checks.
 
 ---
 
+## 19. Sentry for error & performance monitoring + Gemini CLI for autonomous auto-fix
+
+**Context.** Vercel's free tier keeps runtime function logs for only 1 hour. A
+production crash occurring outside active development hours had no durable
+stack trace or breadcrumbs. When incidents occurred, manual investigation,
+patching, and PR creation slowed recovery.
+
+**Decision.**
+1. Instrument `apps/server` with `@sentry/node` (imported first in `src/instrument.ts`,
+   integrated via `Sentry.setupExpressErrorHandler(app)` in `src/server.ts`, and
+   caught in `src/middlewares/errorHandler.ts`).
+2. Instrument `apps/web` with `@sentry/react` (browser tracing + session replay in
+   `src/instrument.ts`, with `<Sentry.ErrorBoundary>` wrapping the root component).
+3. Connect Sentry to GitHub via Sentry's GitHub Integration with Code Mappings
+   for `apps/server/` and `apps/web/`.
+4. Deploy an issue-driven autonomous triage agent using Google's official
+   `google-github-actions/run-gemini-cli@v1` on GitHub Actions (`.github/workflows/gemini-autofix.yml`).
+   The agent is governed by `.github/prompts/autofix-prompt.md`, which mandates a
+   non-invasive, minimal quick-fix first (to avoid regressions or chain reactions)
+   and a strict 3-part PR report (Incident Analysis, Immediate Defensive Fix, and
+   Ranked Permanent Architectural Solutions).
+5. Add an in-code crash reporter (`apps/server/src/lib/autofix/createIssue.ts`) that
+   forwards unhandled 500 crashes to GitHub Issues labeled `auto-fix` with the route
+   pattern, error name/code, stack frames, Sentry event id, and deduplication (capped
+   at 20 open issues), then locks the issue.
+6. Fully automated up to the PR, human at merge. Because the agent starts without
+   anyone reviewing the issue, safety comes from limiting what it can see and do
+   rather than from a manual trigger:
+   - Issues contain no visitor-controlled text (no URL, no error message: those stay
+     in Sentry), and locking keeps outsiders from adding comments. `@gemini` comments
+     are only accepted from OWNER/MEMBER/COLLABORATOR.
+   - `run-gemini-cli` runs Gemini with `--yolo`, so the agent gets file tools only
+     (`tools.core`): no shell, no web access, no GitHub token.
+   - The workflow, not the agent, verifies (same commands as CI), branches, commits,
+     pushes and opens the PR. Up to 3 attempts, each given the previous failure output.
+     Edits outside `apps/*/src` and `packages/lead-validation` (configs, `package.json`,
+     `.github/`, git hooks/config) fail the run.
+   - The `main` ruleset (PR + `verify` check) keeps a human merge between the agent
+     and production. CI is started with `workflow_dispatch` because pushes made with
+     `GITHUB_TOKEN` don't trigger workflows.
+
+**Consequences.** 30-day crash retention and aggregation on Sentry's free tier.
+Zero runtime overhead for the web bundle beyond standard telemetry. A production
+crash becomes a verified, ready-to-review PR without manual steps; the only human
+action is reviewing the 3-part report and merging. Runs that fail 3 times end with an
+issue comment instead of a PR, so an open auto-fix PR always passed CI's checks.
+
+---
+
 ## Known gaps
+
 
 Tracked here so they aren't forgotten:
 

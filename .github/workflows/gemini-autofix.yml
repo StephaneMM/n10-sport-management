@@ -1,0 +1,187 @@
+name: Gemini Autonomous Auto-Fix
+
+# Crash → issue labeled `auto-fix` → up to 3 agent attempts, each verified with the
+# same commands as CI → ready PR on `fix/issue-N`. A maintainer reviews and merges.
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: autofix-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    name: Auto-Fix Issue
+    # Adding a label already requires triage access. Comments are open to anyone on a
+    # public repo, so only maintainers can start the agent that way. PR comments are ignored.
+    if: >-
+      (github.event_name == 'issues' && github.event.label.name == 'auto-fix') ||
+      (github.event_name == 'issue_comment' &&
+        !github.event.issue.pull_request &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+        (contains(github.event.comment.body, '@gemini-cli fix this issue') ||
+         contains(github.event.comment.body, '@gemini fix')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write # start CI on the fix branch (pushes made with GITHUB_TOKEN don't trigger it)
+    env:
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      BRANCH: fix/issue-${{ github.event.issue.number }}
+      MAX_ATTEMPTS: 3
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false # keep the token out of .git/config while the agent and tests run
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Snapshot git config
+        run: sha256sum "$(git rev-parse --git-path config)" | cut -d' ' -f1 > "$RUNNER_TEMP/git-config.sha256"
+
+      - name: Attempt 1
+        id: attempt1
+        uses: ./.github/actions/autofix-attempt
+        with:
+          attempt: 1
+          max_attempts: ${{ env.MAX_ATTEMPTS }}
+          issue_number: ${{ github.event.issue.number }}
+          issue_title: ${{ github.event.issue.title }}
+          issue_body: ${{ github.event.issue.body }}
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL }}
+
+      - name: Attempt 2
+        id: attempt2
+        if: steps.attempt1.outputs.passed != 'true'
+        uses: ./.github/actions/autofix-attempt
+        with:
+          attempt: 2
+          max_attempts: ${{ env.MAX_ATTEMPTS }}
+          issue_number: ${{ github.event.issue.number }}
+          issue_title: ${{ github.event.issue.title }}
+          issue_body: ${{ github.event.issue.body }}
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL }}
+
+      - name: Attempt 3
+        id: attempt3
+        if: steps.attempt1.outputs.passed != 'true' && steps.attempt2.outputs.passed != 'true'
+        uses: ./.github/actions/autofix-attempt
+        with:
+          attempt: 3
+          max_attempts: ${{ env.MAX_ATTEMPTS }}
+          issue_number: ${{ github.event.issue.number }}
+          issue_title: ${{ github.event.issue.title }}
+          issue_body: ${{ github.event.issue.body }}
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: ${{ vars.GEMINI_MODEL }}
+
+      - name: Result
+        id: result
+        env:
+          A1: ${{ steps.attempt1.outputs.passed }}
+          A2: ${{ steps.attempt2.outputs.passed }}
+          A3: ${{ steps.attempt3.outputs.passed }}
+        run: |
+          if [ "$A1" = true ]; then n=1; elif [ "$A2" = true ]; then n=2; elif [ "$A3" = true ]; then n=3; else n=0; fi
+          echo "passed_on=$n" >> "$GITHUB_OUTPUT"
+
+      - name: Open pull request
+        if: steps.result.outputs.passed_on != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          PASSED_ON: ${{ steps.result.outputs.passed_on }}
+        run: |
+          git config user.name "gemini-autofix[bot]"
+          git config user.email "gemini-autofix[bot]@users.noreply.github.com"
+          body="$RUNNER_TEMP/pr-body.md"
+          if [ -s autofix-pr-body.md ]; then
+            mv autofix-pr-body.md "$body"
+          else
+            rm -f autofix-pr-body.md
+            echo "_The agent did not write a PR description._" > "$body"
+          fi
+
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -q -m "fix: auto-fix for #$ISSUE_NUMBER" -m "Generated by Gemini CLI (attempt $PASSED_ON of $MAX_ATTEMPTS)."
+          # Hooks disabled: nothing the agent wrote may run with the token.
+          git -c core.hooksPath=/dev/null push --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/$BRANCH"
+
+          cat >> "$body" <<EOF
+
+          ---
+          ### ✅ Verified by the auto-fix workflow
+          - Passed on attempt **$PASSED_ON of $MAX_ATTEMPTS**
+          - \`pnpm -r run typecheck\`, \`lint\`, \`test\`, \`build\`: all passed
+          - Run: $RUN_URL
+
+          Fixes #$ISSUE_NUMBER
+          EOF
+
+          if pr=$(gh pr view "$BRANCH" --json url --jq .url 2>/dev/null); then
+            gh pr edit "$BRANCH" --body-file "$body"
+          else
+            pr=$(gh pr create --base main --head "$BRANCH" \
+              --title "fix: ${ISSUE_TITLE:0:80} (#$ISSUE_NUMBER)" --body-file "$body")
+          fi
+
+          # Pushes made with GITHUB_TOKEN don't trigger CI; workflow_dispatch does, and its
+          # `verify` check lands on the same commit, which satisfies the main ruleset.
+          gh workflow run ci.yml --ref "$BRANCH"
+
+          gh issue comment "$ISSUE_NUMBER" --body "🤖 Fix ready for review: $pr (passed verification on attempt $PASSED_ON of $MAX_ATTEMPTS)."
+
+      - name: Report failure
+        if: steps.result.outputs.passed_on == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "🤖 Auto-fix gave up after $MAX_ATTEMPTS attempts: none passed verification. No PR was opened."
+            echo
+            for i in $(seq 1 "$MAX_ATTEMPTS"); do
+              log="$RUNNER_TEMP/autofix-verify-$i.log"
+              [ -f "$log" ] || continue
+              echo "<details><summary>Attempt $i</summary>"
+              echo
+              echo '```'
+              tail -n 40 "$log"
+              echo '```'
+              echo "</details>"
+            done
+            echo
+            echo "Run: $RUN_URL"
+          } > "$RUNNER_TEMP/failure.md"
+          gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/failure.md"
+
+      - name: Report error
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "$ISSUE_NUMBER" --body "🤖 Auto-fix run stopped with an error (see $RUN_URL)."

@@ -22,12 +22,15 @@ recruitment process — from first assessment to securing an offer.
 
 | Area | Tech |
 |---|---|
-| Web | Vite 5 · React 18 · TypeScript · Tailwind · shadcn/ui · TanStack Query · react-router · react-hook-form + Zod · i18next (en/fr/es/ar) |
-| API | Node 25 · Express 5 · Prisma 7 (`@prisma/adapter-pg` driver adapter) · PostgreSQL · Zod · JWT (bcrypt + jsonwebtoken) |
+| Web | Vite 5 · React 18 · TypeScript · Tailwind · shadcn/ui · TanStack Query · react-router · react-hook-form + Zod · i18next (en/fr/es/ar) · Sentry |
+| API | Node 25 · Express 5 · Prisma 7 (`@prisma/adapter-pg` driver adapter) · PostgreSQL · Zod · JWT (bcrypt + jsonwebtoken) · Sentry |
 | Data | Neon Postgres |
 | Hosting | Vercel — web as a static site, API as serverless functions |
+| Monitoring | Sentry (Web + API runtime error & performance tracing) |
+| Autonomous Agent | Gemini CLI (GitHub Actions workflow for issue triage & auto-fix PRs) |
 | Tests | Jest + supertest (API) · Vitest + Testing Library (web) · Playwright (E2E) |
 | CI | GitHub Actions — typecheck, lint, test, build on every PR |
+
 
 ---
 
@@ -91,8 +94,17 @@ is missing, too weak, or still a placeholder. See
 `main` is protected: every change goes through a branch → PR → green CI →
 squash-merge. `main` auto-deploys to production (web + API Vercel projects).
 
+**Autonomous bug fixing:** an unhandled 500 on the API opens a GitHub Issue labeled `auto-fix`,
+which starts the Gemini CLI workflow (`.github/workflows/gemini-autofix.yml`); a maintainer
+comment containing `@gemini-cli fix this issue` does the same for any issue. Gemini applies a
+minimal patch following `.github/prompts/autofix-prompt.md`; the workflow verifies it with the
+CI commands (up to 3 attempts, feeding failures back) and opens a ready PR on `fix/issue-N`.
+You review the report and merge.
+
 Database migrations are **not** automated — after a migration merges, run
 `prisma migrate deploy` against the production Neon branch (see `DECISIONS.md`).
+
+
 
 ---
 
