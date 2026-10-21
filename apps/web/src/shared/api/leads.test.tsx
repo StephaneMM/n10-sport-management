@@ -19,7 +19,7 @@ vi.mock("./client", async (importOriginal) => {
 });
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ i18n: { language: "fr-FR" } }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: "fr-FR" } }),
 }));
 
 import { apiClient } from "./client";

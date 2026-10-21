@@ -38,7 +38,7 @@ export function getSubmissionErrorTranslationKey(error: unknown):
 }
 
 export function useSubmitLead() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   return useMutation({
     mutationFn: (data: LeadFormValues) => {
       const verticalJumpCm =
